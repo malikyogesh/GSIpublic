@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Focus Grid — 24×7 Slots with Deep‑Work & Smart Resume</title>
+  <style>
+    :root{
+      --bg:#f4f7f9; --fg:#1f2937; --card:#ffffff; --muted:#6b7280;
+      --run:#1e90ff; --pause:#f1c40f; --stop:#c0392b; --ok:#2ecc71; --idle:#cbd5e1;
+      --shadow:0 4px 14px rgba(0,0,0,.08);
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);margin:0;padding:16px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+    h1{margin:0;font-size:1.15rem;color:#2c3e50}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    button{cursor:pointer;border:none;border-radius:10px;padding:8px 12px;font-weight:700}
+    .primary{background:#3498db;color:#fff}
+    .secondary{background:#e0e7ef;color:#1f2d3a}
+    .danger{background:#ef4444;color:#fff}
+    .ghost{background:#eef2f7;color:#1f2d3a}
+
+    /* Settings bar */
+    #settings{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:12px;margin-bottom:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;align-items:end}
+    .field{display:grid;gap:6px}
+    label{font-weight:700;color:#334155;font-size:.9rem}
+    input[type="time"], input[type="number"], select{padding:8px 10px;border:1px solid #d5dde6;border-radius:8px;background:#fbfdff;font-size:.95rem}
+
+    /* Mini player & ribbon */
+    #mini{position:sticky;top:8px;z-index:3;background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:10px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+    #mini .left{display:flex;align-items:center;gap:10px}
+    #mini .timer{font-weight:900;font-size:1.4rem;color:#0f3b82;letter-spacing:.5px;min-width:86px;text-align:right}
+    #mini .label{font-weight:700;color:#1e293b}
+    #mini .meta{color:var(--muted);font-size:.9rem}
+    #mini .btnrow{display:flex;gap:6px}
+
+    #ribbon{height:8px;border-radius:999px;background:#e5e7eb;overflow:hidden;display:grid;grid-auto-flow:column;gap:2px;margin-bottom:10px}
+    .seg{background:var(--idle);} .seg.done{background:#a7f3d0} .seg.running{background:#bfdbfe} .seg.paused{background:#fde68a}
+
+    /* Grid */
+    #timer-container{width:100%;display:grid;grid-template-columns:repeat(4,minmax(240px,1fr));gap:12px}
+    @media(max-width:1200px){#timer-container{grid-template-columns:repeat(3,minmax(220px,1fr))}}
+    @media(max-width:900px){#timer-container{grid-template-columns:repeat(2,minmax(220px,1fr))}}
+    @media(max-width:560px){#timer-container{grid-template-columns:1fr}}
+
+    .timer-slot{background:var(--card);border-radius:12px;box-shadow:var(--shadow);border-left:5px solid #cbd5e1;padding:12px;display:flex;flex-direction:column;gap:8px}
+    .timer-slot.current{outline:2px solid rgba(30,144,255,.35);box-shadow:0 8px 24px rgba(30,144,255,.18)}
+    .timer-slot.running{border-left-color:var(--run);background:#eaf4ff}
+    .timer-slot.paused{border-left-color:var(--pause)}
+
+    .slot-header{display:flex;align-items:center;justify-content:space-between}
+    .time-label{font-weight:700;font-size:.95rem;color:#2c3e50}
+    .timer-display{font-weight:800;font-size:1.3rem;color:#0f3b82;letter-spacing:.5px}
+
+    .progress{height:6px;background:#eef3f7;border-radius:999px;overflow:hidden}
+    .progress>div{height:100%;width:0%;background:linear-gradient(90deg,#2ecc71,#27ae60)}
+
+    .task-input{width:100%;border:1px solid #d5dde6;border-radius:8px;padding:8px;font-size:.95rem}
+    .btn-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+    .start{background:var(--ok);color:#fff}
+    .pause{background:#e67e22;color:#fff}
+    .stop{background:var(--stop);color:#fff}
+    .interrupt{background:#9ca3af;color:#111827}
+    .muted{color:var(--muted);font-size:.85rem}
+
+    /* Deep work mode */
+    body.deep .timer-slot:not(.current){opacity:.55}
+    body.deep .timer-slot .start:disabled{opacity:.5}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Focus Grid</h1>
+    <div class="controls">
+      <button id="deepBtn" class="secondary" title="Toggle Deep‑Work Mode">🧘 Deep‑Work</button>
+      <button id="reportBtn" class="primary">📊 Open Report</button>
+      <button id="exportJson" class="secondary">⬇️ JSON</button>
+      <button id="exportCsv" class="secondary">⬇️ CSV</button>
+      <button id="importJson" class="secondary">⬆️ Import JSON</button>
+      <button id="jumpNow" class="ghost" title="Scroll to current slot">⏱️ Now</button>
+      <button id="runTests" class="ghost" title="Run built‑in tests">🧪 Run Self‑Test</button>
+    </div>
+  </header>
+
+  <!-- Settings Bar -->
+  <section id="settings">
+    <div class="field">
+      <label for="startTime">Day start</label>
+      <input id="startTime" type="time" value="08:00" />
+    </div>
+    <div class="field">
+      <label for="endTime">Day end</label>
+      <input id="endTime" type="time" value="01:00" />
+    </div>
+    <div class="field">
+      <label for="slotMins">Slot length (minutes)</label>
+      <input id="slotMins" type="number" min="5" step="5" value="15" />
+    </div>
+    <div class="field">
+      <label for="clockFmt">Clock format</label>
+      <select id="clockFmt">
+        <option value="12" selected>12‑hour</option>
+        <option value="24">24‑hour</option>
+      </select>
+    </div>
+    <div class="field">
+      <label><input id="reportDl" type="checkbox" /> Always download report</label>
+    </div>
+    <div class="field">
+      <button id="applySettings" class="primary">Apply</button>
+    </div>
+  </section>
+
+  <!-- Mini Player & Ribbon -->
+  <section id="mini" aria-live="polite" style="display:none">
+    <div class="left">
+      <div class="timer" id="miniTime">00:00</div>
+      <div>
+        <div class="label" id="miniLabel">—</div>
+        <div class="meta" id="miniMeta">Task: — · Project: —</div>
+      </div>
+    </div>
+    <div class="btnrow">
+      <button id="miniPause" class="pause">Pause</button>
+      <button id="miniStop" class="stop">Stop</button>
+      <select id="miniInterruptReason" class="ghost">
+        <option value="call">Call</option>
+        <option value="dm">DM</option>
+        <option value="email">Email</option>
+        <option value="meeting">Meeting</option>
+        <option value="walk-in">Walk‑in</option>
+        <option value="other">Other</option>
+      </select>
+      <button id="miniInterrupt" class="interrupt">Interrupt</button>
+    </div>
+  </section>
+  <div id="ribbon"></div>
+
+  <div id="timer-container"><div id="init-note" class="muted" style="grid-column:1/-1">Loading timers…</div></div>
+
+  <script>
+  (function(){
+    'use strict';
+
+    // ===== Utilities =====
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const pad2 = (n) => String(n).padStart(2,'0');
+    const safePadEnd = (v, n) => (v == null ? '' : String(v)).padEnd(n);
+    const safeStr = (v, fb='') => (v == null ? fb : String(v));
+    const dateKey = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
+    const storage = { get(k,fb=null){ try{const v=localStorage.getItem(k); return v?JSON.parse(v):fb;}catch{return fb;} }, set(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch{} }, del(k){ try{localStorage.removeItem(k);}catch{} } };
+
+    // ===== Settings =====
+    const defaults = { start:'08:00', end:'01:00', slotMin:15, clockFmt:'12', reportDownload:false };
+    const settings = { ...defaults, ...storage.get('gridSettings', {}) };
+    const settingsEl = { start: $('#startTime'), end: $('#endTime'), slot: $('#slotMins'), fmt: $('#clockFmt'), reportDl: $('#reportDl'), apply: $('#applySettings') };
+    const applySettingsToUI = () => { settingsEl.start.value=settings.start; settingsEl.end.value=settings.end; settingsEl.slot.value=settings.slotMin; settingsEl.fmt.value=settings.clockFmt; if (settingsEl.reportDl) settingsEl.reportDl.checked = !!settings.reportDownload; };
+
+    // ===== State =====
+    let scheduleStart=null, scheduleEnd=null, slots=[], segments=[];
+    let log = storage.get(`log:${dateKey()}`, []); // {slotId, task, eventType, timestamp, reason?}
+    let activeIndex=-1, deep=false, blockReportInDeep=true;
+
+    // Sound (finish beep only)
+    function beep(){ try{ const ctx = new (window.AudioContext||window.webkitAudioContext)(); const o=ctx.createOscillator(); const g=ctx.createGain(); o.type='sine'; o.frequency.value=880; o.connect(g); g.connect(ctx.destination); g.gain.value=0.001; g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime+0.01); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.3); o.start(); o.stop(ctx.currentTime+0.31);}catch{} }
+
+    // ===== Time helpers =====
+    function parseTimeToDate(base, hhmm){ const [h,m]=hhmm.split(':').map(Number); const d=new Date(base); d.setHours(h,m,0,0); return d; }
+    function computeBounds(){ const now=new Date(); const s=parseTimeToDate(now, settings.start); let e=parseTimeToDate(now, settings.end); if (e<=s) e.setDate(e.getDate()+1); scheduleStart=s; scheduleEnd=e; }
+    function fmtClock(d){ if(settings.clockFmt==='24') return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; let h=d.getHours(); const am=h>=12?'PM':'AM'; h=h%12||12; return `${h}:${pad2(d.getMinutes())} ${am}`; }
+    function labelOf(s){ return `${fmtClock(new Date(s.startAt))} – ${fmtClock(new Date(s.endAt))}`; }
+
+    // ===== Logging =====
+    function logEvent(slotId, task, eventType, reason){ const ev={slotId, task:task||'Untitled', eventType:eventType||'Event', timestamp:Date.now()}; if(reason) ev.reason=reason; log.push(ev); storage.set(`log:${dateKey()}`, log); }
+
+    // ===== Build Grid =====
+    const container = $('#timer-container'); const ribbon = $('#ribbon');
+
+    function buildGrid(){
+      // Clear
+      container.innerHTML=''; ribbon.innerHTML=''; slots=[]; segments=[]; activeIndex=-1;
+      computeBounds();
+      const totalMins = Math.round((scheduleEnd - scheduleStart)/60000);
+      const count = Math.max(1, Math.floor(totalMins / Number(settings.slotMin)));
+
+      // Ribbon segments
+      ribbon.style.gridTemplateColumns = `repeat(${count}, 1fr)`;
+
+      for(let i=0;i<count;i++){
+        const start=new Date(scheduleStart.getTime()+i*settings.slotMin*60000);
+        const end=new Date(start.getTime()+settings.slotMin*60000);
+
+        // Ribbon
+        const seg=document.createElement('div'); seg.className='seg'; ribbon.appendChild(seg); segments.push(seg);
+
+        // Card
+        const el=document.createElement('div'); el.className='timer-slot'; el.dataset.id=i;
+        el.innerHTML = `
+          <div class="slot-header">
+            <div class="time-label">${fmtClock(start)} – ${fmtClock(end)}</div>
+            <div class="timer-display">${pad2(settings.slotMin)}:00</div>
+          </div>
+          <div class="progress"><div></div></div>
+          <input class="task-input" placeholder="Task… use @project and #tags" />
+          <div class="btn-row">
+            <button class="start">Start</button>
+            <button class="pause">Pause</button>
+            <button class="stop">Stop</button>
+            <select class="ghost" data-int-reason>
+              <option value="call">Call</option>
+              <option value="dm">DM</option>
+              <option value="email">Email</option>
+              <option value="meeting">Meeting</option>
+              <option value="walk-in">Walk‑in</option>
+              <option value="other">Other</option>
+            </select>
+            <button class="interrupt">Interrupt</button>
+            <span class="muted" data-meta>Idle</span>
+          </div>`;
+        container.appendChild(el);
+
+        const s={ id:i, el, startAt:start.getTime(), endAt:end.getTime(), total:settings.slotMin*60, remaining:settings.slotMin*60, running:false, deadline:null, intId:null };
+        slots.push(s);
+        attachHandlers(s);
+      }
+      const note=$('#init-note'); if(note) note.remove();
+      updateActiveTimer(true);
+    }
+
+    function attachHandlers(s){
+      const display=s.el.querySelector('.timer-display'); const pbar=s.el.querySelector('.progress>div');
+      const inp=s.el.querySelector('.task-input'); const meta=s.el.querySelector('[data-meta]');
+      const btnStart=s.el.querySelector('.start'); const btnPause=s.el.querySelector('.pause'); const btnStop=s.el.querySelector('.stop');
+      const btnInt=s.el.querySelector('.interrupt'); const selInt=s.el.querySelector('[data-int-reason]');
+
+      function render(){ const m=Math.floor(s.remaining/60), sc=Math.max(0,Math.ceil(s.remaining%60)); display.textContent=`${pad2(m)}:${pad2(sc)}`; const pct=((s.total-s.remaining)/s.total)*100; pbar.style.width=Math.min(100,Math.max(0,pct))+'%'; }
+      s.render=render; render();
+
+      function tick(){ s.remaining=Math.max(0, Math.ceil((s.deadline - Date.now())/1000)); render(); if(s.remaining<=0) finish(); if(s.id===activeIndex) updateMini(); }
+
+      function start(resume=false, silent=false){ if(s.running) return; if(!resume && Date.now()>=s.startAt && Date.now()<=s.endAt){ s.deadline=s.endAt; s.remaining=Math.max(0,Math.ceil((s.deadline-Date.now())/1000)); } else if(!s.deadline){ s.deadline=Date.now()+s.remaining*1000; }
+        s.running=true; s.el.classList.add('running'); s.el.classList.remove('paused'); meta.textContent='Running'; clearInterval(s.intId); s.intId=setInterval(tick,250); if(!silent) logEvent(s.id, inp.value, resume?'Resume':'Start'); saveRunState(s, inp.value); updateSegCls(); }
+      function pause(){ if(!s.running) return; clearInterval(s.intId); s.intId=null; s.running=false; s.deadline=null; s.el.classList.remove('running'); s.el.classList.add('paused'); meta.textContent='Paused'; logEvent(s.id, inp.value, 'Pause'); clearRunState(); updateSegCls(); }
+      function stop(){ clearInterval(s.intId); s.intId=null; const wasActive=s.remaining<s.total; s.running=false; s.deadline=null; s.remaining=s.total; s.el.classList.remove('running','paused'); meta.textContent='Idle'; render(); if(wasActive) logEvent(s.id, inp.value, 'Stop'); clearRunState(); updateSegCls(); }
+      function finish(){ clearInterval(s.intId); s.intId=null; s.running=false; s.deadline=null; s.remaining=0; render(); s.el.classList.remove('running'); meta.textContent='Finished'; logEvent(s.id, inp.value, 'Finished'); clearRunState(); updateSegCls(); beep(); }
+      function interrupt(){ if(!s.running) return; const reason=selInt.value||'other'; logEvent(s.id, inp.value, 'Interrupt', reason); updateSegCls(); }
+
+      s.api={start, pause, stop, finish, interrupt, inp};
+
+      btnStart.addEventListener('click', ()=> { if(deep && s.id!==activeIndex) return; s.api.start(s.remaining<s.total); updateMini(); });
+      btnPause.addEventListener('click', ()=> { s.api.pause(); updateMini(); });
+      btnStop .addEventListener('click', ()=> { s.api.stop(); updateMini(); });
+      btnInt  .addEventListener('click', ()=> { s.api.interrupt(); });
+    }
+
+    // ===== Deep‑work mode =====
+    const deepBtn = $('#deepBtn');
+    deepBtn.addEventListener('click', ()=>{ deep=!deep; document.body.classList.toggle('deep', deep); deepBtn.textContent = deep? '🧘 Deep‑Work (ON)': '🧘 Deep‑Work'; });
+
+    // ===== Mini player =====
+    const mini = $('#mini'), miniTime=$('#miniTime'), miniLabel=$('#miniLabel'), miniMeta=$('#miniMeta');
+    $('#miniPause').addEventListener('click', ()=>{ const s=slots[activeIndex]; if(s) s.api.pause(); updateMini(); });
+    $('#miniStop').addEventListener('click', ()=>{ const s=slots[activeIndex]; if(s) s.api.stop(); updateMini(); });
+    $('#miniInterrupt').addEventListener('click', ()=>{ const s=slots[activeIndex]; if(!s) return; const reason=$('#miniInterruptReason').value; s.api.interrupt(reason); });
+
+    function extractProject(task=''){ const m=task.match(/@[A-Za-z0-9_\-]+/); return m?m[0].toLowerCase():'—'; }
+    function updateMini(){ const s=slots[activeIndex]; if(!s){ mini.style.display='none'; return; } mini.style.display='flex'; miniLabel.textContent = labelOf(s); const task=s.api.inp.value||'—'; miniMeta.textContent = `Task: ${task} · Project: ${extractProject(task)}`; miniTime.textContent = s ? `${pad2(Math.floor(s.remaining/60))}:${pad2(Math.ceil(s.remaining%60))}` : '00:00'; }
+
+    // ===== Ribbon update =====
+    function updateSegCls(){ slots.forEach((s,i)=>{ const seg=segments[i]; if(!seg) return; seg.className='seg'; if(s.running) seg.classList.add('running'); else if(s.remaining===0) seg.classList.add('done'); else if(s.el.classList.contains('paused')) seg.classList.add('paused'); }); }
+
+    // ===== Active timer logic =====
+    function computeIndex(){ const now=Date.now(); if(now<scheduleStart.getTime()) return -1; if(now>=scheduleEnd.getTime()) return -1; const elapsed=now-scheduleStart.getTime(); return Math.floor(elapsed/(settings.slotMin*60000)); }
+    function markCurrent(i){ slots.forEach(s=>s.el.classList.remove('current')); if(i>=0&&i<slots.length) slots[i].el.classList.add('current'); }
+    function updateActiveTimer(initial=false){ const idx=computeIndex(); if(idx<0){ markCurrent(-1); updateMini(); return; } if(idx!==activeIndex){ activeIndex=idx; markCurrent(idx); const s=slots[idx]; const secondsInto=Math.floor((Date.now()-s.startAt)/1000); if(!restoreFromRunState(idx)){ s.remaining=Math.max(0, s.total - secondsInto); if(s.remaining>0) s.api.start(false, /*silent*/true); else s.api.finish(); } updateMini(); try{ s.el.scrollIntoView({behavior: initial? 'auto':'smooth', block:'center'});}catch{} } updateSegCls(); }
+
+    // ===== Smart resume across refresh =====
+    function saveRunState(s, task){ const rs={slotId:s.id, startedAt: Date.now() - (s.total - s.remaining)*1000, task}; storage.set(`runState:${dateKey()}`, rs); }
+    function clearRunState(){ storage.del(`runState:${dateKey()}`); }
+    function restoreFromRunState(idx){ const rs=storage.get(`runState:${dateKey()}`); if(!rs) return false; if(rs.slotId!==idx) return false; const s=slots[idx]; if(Date.now()<s.startAt || Date.now()>s.endAt) { clearRunState(); return false; } const deadline = rs.startedAt + s.total*1000; s.deadline = deadline; s.remaining = Math.max(0, Math.ceil((deadline - Date.now())/1000)); s.api.start(true, /*silent*/true); return true; }
+
+    // ===== Report generation (shared) =====
+    function generateReportHTML(inputLog){
+      const fmtTS = (ts)=> new Date(ts||Date.now()).toLocaleString();
+      const fmtDelta=(sec)=> `${Math.floor((+sec||0)/60)}m ${pad2(Math.round((+sec||0)%60))}s`;
+      const tagsOf=(s='')=>(safeStr(s).match(/#[A-Za-z0-9_\-]+/g)||[]).map(x=>x.toLowerCase());
+      const projsOf=(s='')=>(safeStr(s).match(/@[A-Za-z0-9_\-]+/g)||[]).map(x=>x.toLowerCase());
+
+      // Group by slot using provided log
+      const bySlot=new Map(); for(const e of (inputLog||[])){ const sid = e && typeof e.slotId!=='undefined' ? e.slotId : '—'; if(!bySlot.has(sid)) bySlot.set(sid,[]); bySlot.get(sid).push(e); }
+
+      let grand=0; const byTask=new Map(); const byProj=new Map(); const byInterrupt=new Map(); let slotHTML='';
+      for(const [slotId, events] of [...bySlot.entries()].sort((a,b)=> (a[0]>b[0]?1:-1))){
+        const s= slots[slotId] || null; events.sort((a,b)=> (a.timestamp||0)-(b.timestamp||0));
+        let total=0,lastStart=null,lastTask=''; let lines=''; const stags=new Set(), sprojs=new Set();
+        for(const e of events){
+          const et = safePadEnd(e && e.eventType, 9);
+          const ts = fmtTS(e && e.timestamp);
+          const task = safeStr(e && e.task, 'Untitled');
+          lines += `  - ${et} ${ts}  task="${task}"${e && e.reason?`  reason=${e.reason}`:''}`;
+          if(e && (e.eventType==='Start'||e.eventType==='Resume')){ lastStart=e.timestamp||Date.now(); lastTask=task; }
+          if(e && (e.eventType==='Pause'||e.eventType==='Stop'||e.eventType==='Finished') && lastStart){
+            const span=Math.max(0,Math.round(((e.timestamp||Date.now())-lastStart)/1000));
+            total+=span; lastStart=null; lines += `  Δ ${fmtDelta(span)}`;
+            if(lastTask){ byTask.set(lastTask,(byTask.get(lastTask)||0)+span); for(const t of tagsOf(lastTask)) stags.add(t); for(const p of projsOf(lastTask)){ sprojs.add(p); byProj.set(p,(byProj.get(p)||0)+span); } }
+          }
+          if(e && e.eventType==='Interrupt'){ const r=e.reason||'other'; byInterrupt.set(r,(byInterrupt.get(r)||0)+1); }
+          lines+='\n';
+        }
+        grand+=total;
+        const tagStr=stags.size?[...stags].join(', '):'—';
+        const prjStr=sprojs.size?[...sprojs].join(', '):'—';
+        const label = s? `${fmtClock(new Date(s.startAt))} – ${fmtClock(new Date(s.endAt))}` : `Slot ${slotId}`;
+        slotHTML += `<h2>Slot: ${label}</h2><div class="muted">Tags: ${tagStr} · Projects: ${prjStr}</div><pre>${lines}
+Total Run Time: ${fmtDelta(total)}</pre>`;
+      }
+
+      const rows=(map)=>[...map.entries()].sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${safeStr(k,'—')}</td><td>${typeof v==='number'?v:0}</td></tr>`).join('')||'<tr><td colspan="2">—</td></tr>';
+      const rowsDur=(map)=>[...map.entries()].sort((a,b)=>b[1]-a[1]).map(([k,sec])=>`<tr><td>${safeStr(k,'—')}</td><td>${fmtDelta(sec)}</td></tr>`).join('')||'<tr><td colspan="2">—</td></tr>';
+
+      return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Timer Report</title><style>
+        body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#f6f8fa;color:#1f2937;margin:0;padding:24px}
+        h1{margin:0 0 10px;font-size:22px}
+        h2{margin:22px 0 8px;font-size:16px;color:#374151}
+        .muted{color:#6b7280;font-size:12px;margin-bottom:8px}
+        pre{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;white-space:pre-wrap;line-height:1.5}
+        table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden}
+        th,td{padding:8px 10px;border-bottom:1px solid #eef2f7;text-align:left;font-size:14px}
+        th{background:#f3f4f6}
+      </style></head><body>
+        <h1>Detailed Activity Report</h1>
+        <div class="muted">${new Date().toLocaleString()} · Grand Total: ${Math.floor(grand/60)}m ${pad2(grand%60)}s</div>
+        <section>
+          <h2>By Task (duration)</h2>
+          <table><thead><tr><th>Task</th><th>Total</th></tr></thead><tbody>${rowsDur(byTask)}</tbody></table>
+        </section>
+        <section>
+          <h2>By Project (duration)</h2>
+          <table><thead><tr><th>Project</th><th>Total</th></tr></thead><tbody>${rowsDur(byProj)}</tbody></table>
+        </section>
+        <section>
+          <h2>Top Interrupt Sources (count)</h2>
+          <table><thead><tr><th>Source</th><th>Count</th></tr></thead><tbody>${rows(byInterrupt)}</tbody></table>
+        </section>
+        <section>
+          <h2>Per‑Slot Timeline</h2>
+          ${slotHTML || '<div class="muted">No activity logged yet.</div>'}
+        </section>
+      </body></html>`;
+    }
+
+    // ===== Report (separate window) =====
+    function openReport(){
+      if(deep && blockReportInDeep){
+        alert('Report is blocked during Deep‑Work mode. Pause/Stop the current slot or toggle Deep‑Work off.');
+        return;
+      }
+      const downloadOnly = !!settings.reportDownload;
+      let w=null; if(!downloadOnly){ try{ w=window.open('', '_blank'); }catch{} }
+      const canUseWindow = !downloadOnly && w && !w.closed;
+
+      const html = generateReportHTML(log);
+
+      if (canUseWindow) { try { w.document.open(); w.document.write(html); w.document.close(); return; } catch {} }
+      // Fallback: download HTML
+      const blob=new Blob([html],{type:'text/html'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download=`focus-report-${dateKey()}.html`;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),5000);
+      if(!downloadOnly) alert('Pop‑up was blocked. I downloaded the report as an HTML file instead. Open it to view.');
+    }
+
+    // ===== Export / Import =====
+    function exportJSON(){ const data={ version:1, date:dateKey(), settings, schedule:{start:scheduleStart, end:scheduleEnd}, log }; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`focus-grid-${dateKey()}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),5000); }
+    function exportCSV(){ const rows=[["slot_id","slot_label","event_type","reason","task","tags","projects","timestamp"]]; const tagsOf=(s='')=>(safeStr(s).match(/#[A-Za-z0-9_\-]+/g)||[]).join(' '); const projsOf=(s='')=>(safeStr(s).match(/@[A-Za-z0-9_\-]+/g)||[]).join(' '); for(const e of log){ const s=slots[e.slotId]; const label=s?labelOf(s):safeStr(e.slotId); rows.push([ e.slotId, label, safeStr(e.eventType), safeStr(e.reason), safeStr(e.task).replaceAll(',',';'), tagsOf(e.task), projsOf(e.task), new Date(e.timestamp||Date.now()).toISOString() ]); } const csv=rows.map(r=>r.map(x=>String(x)).join(',')).join('\n'); const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`focus-grid-${dateKey()}.csv`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),5000); }
+    function importJSON(){ const input=document.createElement('input'); input.type='file'; input.accept='application/json'; input.onchange=()=>{ const f=input.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=()=>{ try{ const data=JSON.parse(reader.result); if(!data || !Array.isArray(data.log)) return alert('Invalid file'); if(data.settings){ Object.assign(settings, data.settings); storage.set('gridSettings', settings); applySettingsToUI(); buildGrid(); } log = data.log; storage.set(`log:${dateKey()}`, log); alert('Imported. Open the report to view.'); }catch{ alert('Failed to import JSON'); } }; reader.readAsText(f); }; input.click(); }
+
+    // ===== Wiring =====
+    $('#reportBtn').addEventListener('click', openReport);
+    $('#exportJson').addEventListener('click', exportJSON);
+    $('#exportCsv').addEventListener('click', exportCSV);
+    $('#importJson').addEventListener('click', importJSON);
+    $('#jumpNow').addEventListener('click', ()=>{ if(activeIndex>=0){ slots[activeIndex].el.scrollIntoView({behavior:'smooth', block:'center'});} });
+
+    settingsEl.apply.addEventListener('click', ()=>{ settings.start=settingsEl.start.value||'08:00'; settings.end=settingsEl.end.value||'01:00'; settings.slotMin=Math.max(5, Number(settingsEl.slot.value)||15); settings.clockFmt = settingsEl.fmt.value==='24'?'24':'12'; settings.reportDownload = !!(settingsEl.reportDl && settingsEl.reportDl.checked); storage.set('gridSettings', settings); buildGrid(); });
+
+    // ===== Init =====
+    applySettingsToUI();
+    buildGrid();
+    setInterval(()=>updateActiveTimer(false), 1000);
+
+    // ===== Self-tests (adds tests since none existed) =====
+    function runTests(){
+      const base = Date.now();
+      const testLog = [
+        // Happy path: full cycle
+        {slotId:0, task:'Write brief @newsletter #deepwork', eventType:'Start', timestamp:base+1000},
+        {slotId:0, task:'Write brief @newsletter #deepwork', eventType:'Pause', timestamp:base+4000},
+        {slotId:0, task:'Write brief @newsletter #deepwork', eventType:'Resume', timestamp:base+6000},
+        {slotId:0, task:'Write brief @newsletter #deepwork', eventType:'Finished', timestamp:base+16000},
+        // Interrupt + undefined eventType (regression case that caused padEnd error)
+        {slotId:1, task:'Inbox zero #email', eventType:'Start', timestamp:base+2000},
+        {slotId:1, task:'Inbox zero #email', eventType:'Interrupt', reason:'dm', timestamp:base+3000},
+        {slotId:1, task:'Inbox zero #email', eventType:undefined, timestamp:base+3500},
+        {slotId:1, task:undefined, eventType:'Stop', timestamp:base+3600},
+        // Missing slotId
+        {task:'Mystery task', eventType:'Start', timestamp:base+5000},
+      ];
+      try{
+        const html = generateReportHTML(testLog);
+        if(!html || !html.includes('Detailed Activity Report')) throw new Error('Report generation failed');
+        // smoke open in new tab
+        const w=window.open('', '_blank'); if(w){ w.document.write(html); w.document.close(); }
+        console.log('Self-tests passed: report generated without padEnd errors.');
+        alert('Self-tests passed. A test report opened in a new tab.');
+      }catch(err){ console.error('Self-tests failed:', err); alert('Self-tests failed: '+err.message); }
+    }
+    $('#runTests').addEventListener('click', runTests);
+  })();
+  </script>
+</body>
+</html>

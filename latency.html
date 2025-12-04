@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<!--
+  Distance ↔ Latency Calculator — Single‑Page HTML
+  NOTE: If your toolchain tries to parse this as TypeScript/TSX and throws
+  "SyntaxError: /index.tsx: Unexpected token (1:0)", save this file as
+  index.html and ensure no TS/JSX loader handles it. This is plain HTML + JS.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Distance ↔ Latency Calculator</title>
+  <style>
+    :root{
+      --bg:#0b0b0e;--panel:#111217;--muted:#7a7f88;--text:#e7e9ee;--line:#23252d;--accent:#3b82f6;--accent-2:#60a5fa;
+      --radius:14px;--radius-sm:10px;--shadow:0 6px 24px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:radial-gradient(1200px 800px at 20% -10%,rgba(59,130,246,.08),transparent),radial-gradient(1000px 700px at 120% 10%,rgba(96,165,250,.06),transparent),var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,Arial,sans-serif}
+    .wrap{max-width:980px;margin:40px auto;padding:24px}
+    .card{background:linear-gradient(180deg,#0f1116, #0c0d11 60%);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
+    h1{font-size:clamp(22px,2.6vw,30px);margin:0 0 8px;font-weight:700;letter-spacing:.2px}
+    p.lead{color:var(--muted);margin:0 0 20px}
+    .row{display:grid;grid-template-columns:1fr;gap:18px}
+    @media (min-width:860px){.row{grid-template-columns:1fr 1fr}}
+    label{font-size:13px;color:#c8cbd2;margin-bottom:6px;display:block}
+    .control{display:flex;gap:10px;align-items:center}
+    input[type="number"], select{background:#0f1116;border:1px solid var(--line);border-radius:var(--radius-sm);color:var(--text);padding:10px 12px;width:100%;outline:none}
+    input[type="number"]:focus, select:focus{border-color:#2c2f38;box-shadow:0 0 0 2px rgba(59,130,246,.25)}
+    .pill{display:inline-flex;gap:10px}
+    .pill button{border:1px solid var(--line);background:#0e1015;color:var(--text);padding:8px 12px;border-radius:12px;cursor:pointer}
+    .pill button.active{background:linear-gradient(180deg,#1b1f2a,#161925);border-color:#2a2e39}
+    .hint{font-size:12px;color:var(--muted)}
+    .results{display:grid;grid-template-columns:1fr;gap:14px;margin-top:10px}
+    @media (min-width:760px){.results{grid-template-columns:1fr 1fr}}
+    .kpi{background:#0f1116;border:1px solid var(--line);border-radius:12px;padding:14px}
+    .kpi .t{font-size:12px;color:var(--muted)}
+    .kpi .v{font-size:22px;font-weight:700;margin-top:4px;letter-spacing:.2px}
+    .section{border-top:1px solid var(--line);margin-top:18px;padding-top:18px}
+    .inline{display:flex;gap:10px;align-items:center}
+    .inline span.badge{font-size:12px;color:#cbd5e1;background:#0f1116;border:1px solid var(--line);padding:4px 8px;border-radius:999px}
+    .footer{font-size:12px;color:var(--muted);margin-top:14px}
+    pre.out{white-space:pre-wrap;background:#0f1116;border:1px solid var(--line);border-radius:12px;padding:12px;color:#cbd5e1}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Distance ↔ Latency Calculator</h1>
+      <p class="lead">Convert between physical distance and network latency. Choose a cable/medium (optional), model circuitous routes, and add serialization delay if relevant.</p>
+
+      <!-- Mode switch -->
+      <div class="pill" role="tablist" aria-label="Mode">
+        <button id="btn-d2l" class="active" role="tab" aria-selected="true">Distance → Latency</button>
+        <button id="btn-l2d" role="tab" aria-selected="false">Latency → Distance</button>
+      </div>
+
+      <!-- Inputs -->
+      <div class="row section" id="inputs-row">
+        <div id="pane-d2l">
+          <label>Distance</label>
+          <div class="control">
+            <input id="in-distance" type="number" min="0" value="1000" />
+            <select id="in-distance-unit"><option value="km">km</option><option value="mi">miles</option></select>
+          </div>
+        </div>
+        <div id="pane-l2d" style="display:none">
+          <label>Latency input</label>
+          <div class="control">
+            <input id="in-latency" type="number" min="0" value="10" />
+            <span class="hint">ms</span>
+          </div>
+          <div class="inline" style="margin-top:8px">
+            <input id="in-latency-rtt" type="checkbox" />
+            <label for="in-latency-rtt" style="margin:0">Value is RTT (round‑trip)</label>
+          </div>
+        </div>
+
+        <div>
+          <label>Transmission medium (optional)</label>
+          <select id="in-medium"></select>
+          <div id="custom-vf-row" class="control" style="display:none;margin-top:8px">
+            <span class="hint" style="width:160px">Velocity factor</span>
+            <input id="in-custom-vf" type="number" step="0.01" min="0.1" max="1" value="0.68" />
+            <span class="hint">fraction of c</span>
+          </div>
+          <div class="hint" id="medium-note" style="margin-top:6px"></div>
+
+          <div class="control" style="margin-top:10px">
+            <span class="hint" style="width:110px">Route factor</span>
+            <input id="in-route" type="number" step="0.01" min="0.1" value="1.00" style="max-width:120px" />
+            <span class="hint">× geodesic (e.g., 1.25 for slack & detours)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Serialization -->
+      <div class="section">
+        <div class="inline">
+          <input id="in-add-ser" type="checkbox" />
+          <label for="in-add-ser" style="margin:0">Include serialization delay (per direction)</label>
+        </div>
+        <div id="ser-opts" class="row" style="display:none;margin-top:10px">
+          <div class="control">
+            <span class="hint" style="width:140px">Packet size</span>
+            <input id="in-bytes" type="number" min="64" value="1500" />
+            <span class="hint">bytes</span>
+          </div>
+          <div class="control">
+            <span class="hint" style="width:140px">Link speed</span>
+            <input id="in-gbps" type="number" step="0.1" min="0.001" value="10" />
+            <span class="hint">Gbps</span>
+          </div>
+          <div class="hint" id="ser-ms" style="grid-column:1/-1;margin-top:-6px">Serialization per direction: — ms</div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="section">
+        <div class="results">
+          <div class="kpi"><div class="t">Assumed propagation speed</div><div class="v"><span id="out-v"></span> km/s <span class="t">(<span id="out-vf"></span>% of c)</span></div></div>
+          <div class="kpi"><div class="t">Effective path length</div><div class="v"><span id="out-km"></span> km <span class="t">(<span id="out-mi"></span> miles)</span></div></div>
+          <div class="kpi"><div class="t">One‑way latency (incl. serialization)</div><div class="v" id="out-oneway"></div></div>
+          <div class="kpi"><div class="t">Round‑trip time (RTT)</div><div class="v" id="out-rtt"></div></div>
+        </div>
+        <div class="footer">Notes: This models propagation plus optional serialization. Real paths add switching/queuing, FEC, O/E conversions, and policy—often dominating in metro. Use the route factor to capture non‑geodesic conduit and slack.</div>
+        <div class="footer">Formulae: <code>latency_oneway = distance / (c × vf)</code>, <code>distance = latency_oneway × (c × vf)</code>. c ≈ 299,792.458 km/s.</div>
+      </div>
+
+      <!-- Tests -->
+      <div class="section">
+        <div class="inline" style="justify-content:space-between">
+          <span class="hint">Built‑in sanity tests</span>
+          <button id="btn-tests" class="pill" style="padding:6px 10px">Run tests</button>
+        </div>
+        <pre id="tests-out" class="out" style="margin-top:10px">Click "Run tests" to verify constants and basic behaviors.</pre>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Constants & presets
+  const C_KM_PER_S = 299792.458;
+  const MEDIUMS = [
+    { key:'fiber_sm',     name:'Single‑mode fiber (typical)', vf: 1/1.468, note:'~n=1.468 ⇒ ~0.681c' },
+    { key:'fiber_subsea', name:'Subsea fiber (typical)',      vf: 0.67,    note:'Slightly lower due to design' },
+    { key:'copper',       name:'Copper / coax',               vf: 0.59,    note:'Velocity factor varies by dielectric' },
+    { key:'free_space',   name:'Free space (LOS / microwave)',vf: 1.00,    note:'Vacuum/air approximation' },
+    { key:'custom',       name:'Custom velocity factor…',     vf: 0.68,    note:'Set your own' },
+  ];
+
+  // Elements
+  const E = (id)=>document.getElementById(id);
+  const btnD2L = E('btn-d2l');
+  const btnL2D = E('btn-l2d');
+  const paneD2L = E('pane-d2l');
+  const paneL2D = E('pane-l2d');
+
+  const inDist = E('in-distance');
+  const inDistUnit = E('in-distance-unit');
+  const inLat = E('in-latency');
+  const inLatRTT = E('in-latency-rtt');
+
+  const inMedium = E('in-medium');
+  const customRow = E('custom-vf-row');
+  const inCustomVF = E('in-custom-vf');
+  const mediumNote = E('medium-note');
+  const inRoute = E('in-route');
+
+  const inAddSer = E('in-add-ser');
+  const serOpts = E('ser-opts');
+  const inBytes = E('in-bytes');
+  const inGbps = E('in-gbps');
+  const serMs = E('ser-ms');
+
+  const outV = E('out-v');
+  const outVF = E('out-vf');
+  const outKM = E('out-km');
+  const outMI = E('out-mi');
+  const outOne = E('out-oneway');
+  const outRTT = E('out-rtt');
+
+  const testsBtn = E('btn-tests');
+  const testsOut = E('tests-out');
+
+  let mode = 'd2l'; // or 'l2d'
+
+  // Helpers
+  const fmt = (n, digits=3)=>{
+    if(!isFinite(n)) return '—';
+    const abs=Math.abs(n); const d = abs>=1000?0:abs>=100?1:digits;
+    return n.toLocaleString(undefined,{maximumFractionDigits:d});
+  };
+  const toKm = (val, unit)=> unit==='km' ? val : val*1.609344;
+  const fromKm = (km, unit)=> unit==='km' ? km : km/1.609344;
+
+  function currentVF(){
+    const key = inMedium.value;
+    const m = MEDIUMS.find(x=>x.key===key) || MEDIUMS[0];
+    if(m.key==='custom'){
+      const v = Math.max(0.1, Math.min(1.0, parseFloat(inCustomVF.value)||0));
+      return { vf:v, label:m.name, note:m.note };
+    }
+    return { vf:m.vf, label:m.name, note:m.note };
+  }
+
+  function serializationDelayMs(){
+    if(!inAddSer.checked) return 0;
+    const bits = Math.max(64, parseFloat(inBytes.value)||0)*8;
+    const bps = Math.max(0.001, parseFloat(inGbps.value)||0)*1e9;
+    return (bits/bps)*1000; // ms per direction
+  }
+
+  function compute(){
+    const { vf, label, note } = currentVF();
+    const v_km_s = C_KM_PER_S * vf;
+    const route = Math.max(0.1, parseFloat(inRoute.value)||1);
+    const ser = serializationDelayMs();
+
+    let km, oneWay_ms, rtt_ms;
+    if(mode==='d2l'){
+      km = toKm(parseFloat(inDist.value)||0, inDistUnit.value) * route;
+      oneWay_ms = (km / v_km_s) * 1000 + ser;
+      rtt_ms = oneWay_ms * 2;
+    } else {
+      const input_ms = (parseFloat(inLat.value)||0);
+      const ow_ms = inLatRTT.checked ? input_ms/2 : input_ms;
+      const propagationOnly_ms = Math.max(0, ow_ms - ser);
+      km = (propagationOnly_ms/1000) * v_km_s / route;
+      oneWay_ms = ow_ms;
+      rtt_ms = ow_ms*2;
+    }
+
+    // Output
+    outV.textContent = fmt(v_km_s);
+    outVF.textContent = fmt(vf*100,2);
+    outKM.textContent = fmt(km,3);
+    outMI.textContent = fmt(fromKm(km,'mi'),3);
+    outOne.textContent = fmt(oneWay_ms,4) + ' ms';
+    outRTT.textContent = fmt(rtt_ms,4) + ' ms';
+
+    mediumNote.textContent = label ? `${label}: ${note||''}` : '';
+    serMs.textContent = `Serialization per direction: ${fmt(ser,4)} ms`;
+  }
+
+  // Populate medium list
+  function initMediums(){
+    inMedium.innerHTML = '';
+    MEDIUMS.forEach(m=>{
+      const opt=document.createElement('option');
+      opt.value=m.key; opt.textContent = m.key!=='custom' ? `${m.name} (${m.vf.toFixed(3)}c)` : m.name;
+      inMedium.appendChild(opt);
+    });
+    inMedium.value='fiber_sm';
+  }
+
+  // Event wiring
+  function wire(){
+    btnD2L.addEventListener('click',()=>{
+      mode='d2l'; btnD2L.classList.add('active'); btnL2D.classList.remove('active');
+      paneD2L.style.display='block'; paneL2D.style.display='none'; compute();
+    });
+    btnL2D.addEventListener('click',()=>{
+      mode='l2d'; btnL2D.classList.add('active'); btnD2L.classList.remove('active');
+      paneD2L.style.display='none'; paneL2D.style.display='block'; compute();
+    });
+
+    [inDist,inDistUnit,inLat,inLatRTT,inRoute,inBytes,inGbps].forEach(el=> el.addEventListener('input', compute));
+    [inAddSer].forEach(el=> el.addEventListener('change', ()=>{ serOpts.style.display = inAddSer.checked?'grid':'none'; compute(); }));
+
+    inMedium.addEventListener('change',()=>{
+      const isCustom = inMedium.value==='custom';
+      customRow.style.display = isCustom ? 'flex' : 'none';
+      compute();
+    });
+    inCustomVF.addEventListener('input', compute);
+  }
+
+  // --- Tests --- (existing tests kept; additional tests appended)
+  function runTests(){
+    const vf_fiber = 1/1.468;
+    const vf_subsea = 0.67;
+    const vf_copper = 0.59;
+    const lines = [];
+    let ok = true;
+    function assertClose(name, actual, expected, tol){
+      const diff = Math.abs(actual-expected);
+      const pass = diff <= tol;
+      if(!pass) ok = false;
+      lines.push(`${pass?'PASS':'FAIL'} | ${name} | actual=${actual.toFixed(9)} expected=${expected.toFixed(9)} Δ=${diff.toExponential(2)} ≤ ${tol}`);
+    }
+
+    // ===== Existing tests (unchanged) =====
+    // 1) 1000 km in free space → one‑way
+    assertClose('1000 km free‑space → one‑way (ms)', (1000/(C_KM_PER_S*1.0))*1000, 3.33564095198, 1e-6);
+    // 2) 1000 km single‑mode fiber → one‑way
+    assertClose('1000 km SMF → one‑way (ms)', (1000/(C_KM_PER_S*vf_fiber))*1000, 4.89672091751, 5e-6);
+    // 3) 10 ms RTT in fiber → distance (km)
+    assertClose('10 ms RTT in SMF → km', (10/2/1000)*C_KM_PER_S*vf_fiber, 1021.09147820, 1e-6);
+    // 4) Serialization 1500B @ 10 Gbps per direction
+    assertClose('Serialization 1500B@10G (ms)', (1500*8/1e10)*1000, 0.0012, 1e-9);
+    // 5) Route factor 1.25, 1000 km FSO → one‑way
+    assertClose('Route 1.25, 1000 km FSO → one‑way (ms)', ((1000*1.25)/(C_KM_PER_S*1.0))*1000, 4.16955118998, 1e-6);
+    // 6) Unit conversion check: 621.371 miles = ~1000 km
+    assertClose('Miles→km conversion', 621.371*1.609344, 1000.000102, 1e-3);
+
+    // ===== Additional tests =====
+    // 7) 1000 km subsea fiber → one‑way (ms)
+    assertClose('1000 km subsea fiber → one‑way (ms)', (1000/(C_KM_PER_S*vf_subsea))*1000, 4.97856858505, 5e-6);
+    // 8) 5000 km SMF → one‑way (ms)
+    assertClose('5000 km SMF → one‑way (ms)', (5000/(C_KM_PER_S*vf_fiber))*1000, 24.48360458754, 5e-6);
+    // 9) 100 km copper → one‑way (ms)
+    assertClose('100 km copper → one‑way (ms)', (100/(C_KM_PER_S*vf_copper))*1000, 0.56536287322, 1e-6);
+    // 10) 64B @ 1 Gbps serialization (ms)
+    assertClose('Serialization 64B@1G (ms)', (64*8/1e9)*1000, 0.000512, 1e-12);
+    // 11) 20 ms RTT in free‑space → distance (km)
+    assertClose('20 ms RTT in FSO → km', (20/2/1000)*C_KM_PER_S*1.0, 2997.92458, 1e-5);
+    // 12) 10 ms one‑way in SMF with route 1.25 → base km
+    assertClose('10 ms one‑way SMF, route 1.25 → km', (10/1000)*C_KM_PER_S*vf_fiber/1.25, 1633.74636512, 1e-6);
+
+    testsOut.textContent = (ok ? 'All tests passed.' : 'Some tests FAILED.') + "\n" + lines.join("\n");
+  }
+
+  // Init
+  initMediums(); wire(); compute();
+  testsBtn.addEventListener('click', runTests);
+</script>
+</body>
+</html>

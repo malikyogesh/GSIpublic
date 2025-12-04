@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wiki Task Manager — Single File</title>
+  <style>
+    :root{
+      --bg:#f6f6f6; --paper:#ffffff; --ink:#1a1a1a; --muted:#6b7280; --accent:#2563eb;
+      --ok:#059669; --warn:#d97706; --bad:#dc2626; --table:#e5e7eb;
+    }
+    html,body{height:100%}
+    body{margin:0; font:16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji"; color:var(--ink); background:var(--bg)}
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{background:#fff;border-bottom:1px solid var(--table);position:sticky;top:0;z-index:10}
+    .wrap{max-width:1200px;margin:0 auto;padding:12px 16px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand h1{font-size:18px;margin:0}
+    .grid{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start}
+    nav{position:sticky; top:58px; align-self:start; max-height:calc(100dvh - 64px); overflow:auto;}
+    nav .card{padding:12px}
+    nav ul{list-style:none; padding:0; margin:0}
+    nav li{margin:6px 0}
+    .card{background:var(--paper);border:1px solid var(--table);border-radius:10px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+    .card h2, .card h3{margin:0 0 8px 0; font-size:18px}
+    .card .body{padding:12px}
+    .section{scroll-margin-top:70px}
+    .muted{color:var(--muted)}
+    .row{display:flex; gap:8px; flex-wrap:wrap}
+    input[type=text], input[type=number], select, textarea{width:100%; padding:8px 10px; border:1px solid var(--table); border-radius:8px; background:#fff}
+    label{font-size:12px; color:var(--muted)}
+    .field{display:flex; flex-direction:column; gap:6px; min-width:180px;}
+    .btn{appearance:none; border:1px solid var(--table); background:#fff; color:var(--ink); padding:8px 12px; border-radius:8px; cursor:pointer}
+    .btn.primary{background:var(--accent); color:#fff; border-color:var(--accent)}
+    .btn.ghost{background:transparent}
+    .btn.danger{background:var(--bad); color:#fff; border-color:var(--bad)}
+    .btn.warn{background:var(--warn); color:#fff; border-color:var(--warn)}
+    .btn:disabled{opacity:.6; cursor:not-allowed}
+    table{width:100%; border-collapse:collapse; font-size:14px}
+    th,td{border-bottom:1px solid var(--table); padding:8px; vertical-align:top}
+    th{background:#fafafa; text-align:left; position:sticky; top:0}
+    .kpi{display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:10px}
+    .kpi .meter{padding:12px;border:1px solid var(--table); border-radius:10px; background:var(--paper)}
+    .tag{display:inline-block; background:#eef2ff; border:1px solid #e0e7ff; color:#3730a3; padding:1px 6px; border-radius:999px; font-size:12px; margin:0 4px 4px 0}
+    .pill{display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; border:1px solid var(--table)}
+    .u-low{background:#ecfeff; color:#0e7490; border-color:#a5f3fc}
+    .u-med{background:#fffbeb; color:#a16207; border-color:#fde68a}
+    .u-high{background:#fef2f2; color:#b91c1c; border-color:#fecaca}
+    .table-wrap{max-height:360px; overflow:auto; border:1px solid var(--table); border-radius:8px}
+    .soft{font-size:12px; color:var(--muted)}
+    .nowrap{white-space:nowrap}
+    .flex{display:flex; align-items:center; gap:8px}
+    .grow{flex:1}
+    .right{justify-content:flex-end}
+    .mr8{margin-right:8px}
+    .mb8{margin-bottom:8px}
+    .mb12{margin-bottom:12px}
+    .mb16{margin-bottom:16px}
+    .mb0{margin-bottom:0}
+    .hidden{display:none}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap brand">
+      <h1>📚 Wiki Task Manager</h1>
+      <span class="muted">Single‑file, offline, localStorage‑powered</span>
+      <span class="grow"></span>
+      <button class="btn" id="btnExport">Export Data</button>
+      <button class="btn" id="btnImport">Import Data</button>
+      <input type="file" id="importFile" accept="application/json" class="hidden" />
+    </div>
+  </header>
+
+  <main class="wrap grid">
+    <nav>
+      <div class="card body">
+        <strong>On this page</strong>
+        <ul>
+          <li><a href="#tasks">Tasks</a></li>
+          <li><a href="#timer">Pomodoro Timer</a></li>
+          <li><a href="#logs">Activity Log</a></li>
+          <li><a href="#reports">Reports</a></li>
+          <li><a href="#help">Help</a></li>
+        </ul>
+      </div>
+      <div class="card body">
+        <div class="soft">Quick stats</div>
+        <div class="kpi">
+          <div class="meter"><div class="soft">Tasks</div><div id="kpiTasks" class="mono">0</div></div>
+          <div class="meter"><div class="soft">Pomodoros</div><div id="kpiPoms" class="mono">0</div></div>
+          <div class="meter"><div class="soft">Work minutes</div><div id="kpiMins" class="mono">0</div></div>
+        </div>
+      </div>
+    </nav>
+
+    <div>
+      <!-- TASKS -->
+      <section id="tasks" class="section card">
+        <div class="body">
+          <h2 class="mb12">Tasks</h2>
+          <div class="row mb12">
+            <div class="field" style="min-width:260px">
+              <label>Task name</label>
+              <input id="taskName" type="text" placeholder="e.g., Draft proposal" />
+            </div>
+            <div class="field">
+              <label>Tags (comma‑separated)</label>
+              <input id="taskTags" type="text" placeholder="research, writing" />
+            </div>
+            <div class="field">
+              <label>Project</label>
+              <input id="taskProject" type="text" placeholder="Project name" />
+            </div>
+            <div class="field" style="max-width:160px">
+              <label>Urgency</label>
+              <select id="taskUrgency">
+                <option>Low</option>
+                <option selected>Medium</option>
+                <option>High</option>
+              </select>
+            </div>
+            <div class="field" style="min-width:140px">
+              <label>&nbsp;</label>
+              <button id="btnAddTask" class="btn primary">Add Task</button>
+            </div>
+          </div>
+
+          <details class="mb12">
+            <summary class="soft">Filters &amp; search</summary>
+            <div class="row mb8">
+              <div class="field"><label>Search name</label><input id="fName" type="text" placeholder="contains..." /></div>
+              <div class="field"><label>Tag includes</label><input id="fTag" type="text" placeholder="tag..." /></div>
+              <div class="field"><label>Project</label><input id="fProject" type="text" placeholder="project..." /></div>
+              <div class="field" style="max-width:160px"><label>Urgency</label>
+                <select id="fUrgency"><option value="">Any</option><option>Low</option><option>Medium</option><option>High</option></select>
+              </div>
+              <div class="field" style="min-width:120px"><label>&nbsp;</label>
+                <button class="btn" id="btnClearFilters">Clear</button></div>
+            </div>
+          </details>
+
+          <div class="table-wrap" id="tasksWrap">
+            <table id="tasksTable" aria-label="Tasks table">
+              <thead>
+                <tr>
+                  <th style="width:28px">#</th>
+                  <th>Name</th>
+                  <th>Tags</th>
+                  <th>Project</th>
+                  <th>Urgency</th>
+                  <th class="nowrap">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tasksTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TIMER -->
+      <section id="timer" class="section card">
+        <div class="body">
+          <h2 class="mb12">Pomodoro Timer</h2>
+          <div class="row mb12">
+            <div class="field" style="min-width:220px">
+              <label>Bind to task</label>
+              <select id="timerTask"></select>
+            </div>
+            <div class="field"><label>Task name</label><input id="timerName" type="text" placeholder="If not binding to an existing task" /></div>
+            <div class="field"><label>Tags</label><input id="timerTags" type="text" placeholder="comma‑separated" /></div>
+            <div class="field"><label>Project</label><input id="timerProject" type="text" /></div>
+            <div class="field" style="max-width:160px"><label>Urgency</label>
+              <select id="timerUrgency"><option>Low</option><option selected>Medium</option><option>High</option></select>
+            </div>
+          </div>
+
+          <div class="row mb12">
+            <div class="field" style="max-width:140px"><label>Work (min)</label><input id="pomoWork" type="number" value="25" min="1" /></div>
+            <div class="field" style="max-width:140px"><label>Break (min)</label><input id="pomoBreak" type="number" value="5" min="1" /></div>
+            <div class="field" style="max-width:220px"><label>Mode</label>
+              <select id="pomoMode"><option value="work" selected>Work</option><option value="break">Break</option></select>
+            </div>
+            <div class="field" style="min-width:220px"><label>&nbsp;</label>
+              <div class="row">
+                <button id="btnStart" class="btn primary">Start</button>
+                <button id="btnPause" class="btn" disabled>Pause</button>
+                <button id="btnResume" class="btn" disabled>Resume</button>
+                <button id="btnStop" class="btn danger" disabled>Stop</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin:8px 0; border-style:dashed">
+            <div class="body flex">
+              <div class="mono" id="timerDisplay" style="font-size:38px; letter-spacing:1px; min-width:150px">25:00</div>
+              <div class="soft" id="timerStatus">Idle</div>
+              <span class="grow"></span>
+              <div class="soft">Completed work sessions: <span id="pomsDone" class="mono">0</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LOGS -->
+      <section id="logs" class="section card">
+        <div class="body">
+          <h2 class="mb12">Activity Log</h2>
+          <details class="mb12">
+            <summary class="soft">Filter logs</summary>
+            <div class="row mb8">
+              <div class="field"><label>Search text</label><input id="logSearch" type="text" /></div>
+              <div class="field" style="max-width:200px"><label>Type</label>
+                <select id="logType"><option value="">Any</option><option>TASK_CREATE</option><option>TASK_UPDATE</option><option>TASK_DELETE</option><option>TIMER_START</option><option>TIMER_PAUSE</option><option>TIMER_RESUME</option><option>TIMER_STOP</option><option>POMODORO_COMPLETE</option><option>WORK_TIME</option></select>
+              </div>
+              <div class="field"><label>Project</label><input id="logProject" type="text" /></div>
+              <div class="field"><label>Tag includes</label><input id="logTag" type="text" /></div>
+              <div class="field" style="max-width:160px"><label>Urgency</label>
+                <select id="logUrgency"><option value="">Any</option><option>Low</option><option>Medium</option><option>High</option></select>
+              </div>
+              <div class="field" style="min-width:120px"><label>&nbsp;</label>
+                <button class="btn" id="btnClearLogFilters">Clear</button></div>
+            </div>
+          </details>
+
+          <div class="table-wrap">
+            <table id="logTable">
+              <thead>
+                <tr>
+                  <th class="nowrap" style="width:200px">Timestamp</th>
+                  <th>Type</th>
+                  <th>Task</th>
+                  <th>Meta</th>
+                </tr>
+              </thead>
+              <tbody id="logTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPORTS -->
+      <section id="reports" class="section card">
+        <div class="body">
+          <h2 class="mb12">Reports</h2>
+          <div class="row mb12">
+            <div class="field" style="max-width:220px"><label>Group by</label>
+              <select id="reportGroup">
+                <option value="task">Task</option>
+                <option value="tag">Tag</option>
+                <option value="project">Project</option>
+                <option value="urgency">Urgency</option>
+              </select>
+            </div>
+            <div class="field" style="min-width:140px"><label>&nbsp;</label><button id="btnRunReport" class="btn primary">Run Report</button></div>
+          </div>
+
+          <div class="table-wrap">
+            <table id="reportTable">
+              <thead>
+                <tr>
+                  <th>Group</th>
+                  <th>Items</th>
+                  <th>Work sessions (done)</th>
+                  <th>Total work time (min)</th>
+                  <th>Last activity</th>
+                </tr>
+              </thead>
+              <tbody id="reportTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- HELP -->
+      <section id="help" class="section card">
+        <div class="body">
+          <h2>Help & Notes</h2>
+          <ul>
+            <li>Data is stored locally in your browser (localStorage). Use <em>Export</em> to back it up or move to another device.</li>
+            <li>Tags are comma‑separated. Example: <span class="tag">writing</span> <span class="tag">research</span></li>
+            <li>Pomodoro reports sum all <strong>work</strong> time from completed or stopped sessions, grouped by your chosen dimension.</li>
+            <li>Bind the timer to an existing task to attribute time automatically. Otherwise, the timer creates a transient task context.</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+  // ---------- Utilities ----------
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  const nowISO = () => new Date().toISOString();
+  const uid = () => Math.random().toString(36).slice(2)+Date.now().toString(36);
+  const parseTags = (s) => (s||"").split(",").map(t=>t.trim()).filter(Boolean);
+  const fmtTime = (iso) => new Date(iso).toLocaleString();
+  const clamp = (v,min,max)=>Math.min(Math.max(v,min),max);
+  const fmtMs = (ms)=>{
+    const t = Math.max(0, Math.round(ms/1000));
+    const m = Math.floor(t/60), s = t%60; return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  };
+  const mins = (ms)=> Math.round(ms/60000);
+
+  // ---------- State ----------
+  const KEY = {
+    tasks: 'wiki.tasks',
+    logs: 'wiki.logs',
+    timer: 'wiki.timer',
+    settings: 'wiki.settings'
+  };
+  let tasks = JSON.parse(localStorage.getItem(KEY.tasks) || '[]');
+  let logs = JSON.parse(localStorage.getItem(KEY.logs) || '[]');
+  let timer = JSON.parse(localStorage.getItem(KEY.timer) || 'null');
+  let settings = Object.assign({ workMin:25, breakMin:5 }, JSON.parse(localStorage.getItem(KEY.settings) || '{}'));
+
+  const save = () => {
+    localStorage.setItem(KEY.tasks, JSON.stringify(tasks));
+    localStorage.setItem(KEY.logs, JSON.stringify(logs));
+    localStorage.setItem(KEY.timer, JSON.stringify(timer));
+    localStorage.setItem(KEY.settings, JSON.stringify(settings));
+    refreshKPI();
+  };
+
+  const log = (type, obj={}) => {
+    const entry = Object.assign({ id: uid(), ts: nowISO(), type }, obj);
+    logs.unshift(entry); // newest first
+    save();
+    renderLogs();
+  };
+
+  // ---------- Tasks ----------
+  function addTask({name,tags,project,urgency}){
+    const t = { id: uid(), name: name.trim(), tags: parseTags(tags), project: (project||'').trim(), urgency: urgency||'Medium', createdAt: nowISO(), updatedAt: nowISO() };
+    tasks.push(t); save(); log('TASK_CREATE', { taskId:t.id, name:t.name, tags:t.tags, project:t.project, urgency:t.urgency });
+    renderTasks(); renderTimerTaskSelect();
+  }
+  function updateTask(id, patch){
+    const t = tasks.find(x=>x.id===id); if(!t) return;
+    Object.assign(t, patch, {updatedAt: nowISO()}); save();
+    log('TASK_UPDATE', { taskId:t.id, name:t.name, tags:t.tags, project:t.project, urgency:t.urgency });
+    renderTasks(); renderTimerTaskSelect();
+  }
+  function deleteTask(id){
+    const t = tasks.find(x=>x.id===id); if(!t) return;
+    tasks = tasks.filter(x=>x.id!==id); save();
+    log('TASK_DELETE', { taskId:id, name:t.name });
+    renderTasks(); renderTimerTaskSelect();
+  }
+
+  // ---------- Timer ----------
+  let tickHandle = null;
+
+  function getTimerDefaults(){
+    return {
+      status:'idle', mode:'work', taskId:null,
+      meta:{ name:'', tags:[], project:'', urgency:'Medium' },
+      startedAt:null, remainingMs: settings.workMin*60000,
+      durationWorkMs: settings.workMin*60000,
+      durationBreakMs: settings.breakMin*60000,
+      pomsDone: 0
+    };
+  }
+
+  function ensureTimer(){ if(!timer) timer = getTimerDefaults(); }
+
+  function bindTimerMetaFromUI(){
+    const taskSel = $('#timerTask').value;
+    if(taskSel){
+      const t = tasks.find(x=>x.id===taskSel); if(t){
+        timer.taskId = t.id;
+        timer.meta = { name:t.name, tags:[...t.tags], project:t.project, urgency:t.urgency };
+      }
+    } else {
+      timer.taskId = null;
+      timer.meta = {
+        name: $('#timerName').value.trim()||'Untitled',
+        tags: parseTags($('#timerTags').value),
+        project: $('#timerProject').value.trim(),
+        urgency: $('#timerUrgency').value
+      };
+    }
+  }
+
+  function pushWorkTime(ms){
+    // Create a credit of actual work time for reporting
+    if(timer.mode==='work' && ms>0){
+      log('WORK_TIME', { taskId: timer.taskId, name: timer.meta.name, tags: timer.meta.tags, project: timer.meta.project, urgency: timer.meta.urgency, ms });
+    }
+  }
+
+  function startTimer(){
+    ensureTimer();
+    // sync durations
+    settings.workMin = clamp(parseInt($('#pomoWork').value||25,10), 1, 240);
+    settings.breakMin = clamp(parseInt($('#pomoBreak').value||5,10), 1, 240);
+    timer.durationWorkMs = settings.workMin*60000;
+    timer.durationBreakMs = settings.breakMin*60000;
+    timer.mode = $('#pomoMode').value;
+
+    if(timer.status==='running') return;
+
+    bindTimerMetaFromUI();
+
+    timer.remainingMs = timer.mode==='work'? timer.durationWorkMs : timer.durationBreakMs;
+    timer.startedAt = Date.now();
+    timer.status='running';
+    save();
+
+    $('#btnStart').disabled = true;
+    $('#btnPause').disabled = false;
+    $('#btnResume').disabled = true;
+    $('#btnStop').disabled = false;
+
+    log('TIMER_START', { mode: timer.mode, taskId: timer.taskId, name: timer.meta.name, tags: timer.meta.tags, project: timer.meta.project, urgency: timer.meta.urgency, durationMs: timer.remainingMs });
+
+    tickHandle = setInterval(tick, 250);
+    renderTimer();
+  }
+
+  function pauseTimer(){
+    if(timer.status!=='running') return;
+    const elapsed = Date.now() - timer.startedAt;
+    timer.remainingMs = Math.max(0, timer.remainingMs - elapsed);
+    timer.status='paused';
+    log('TIMER_PAUSE', { mode: timer.mode, taskId: timer.taskId, remainingMs: timer.remainingMs });
+    clearInterval(tickHandle); tickHandle=null;
+    $('#btnPause').disabled = true; $('#btnResume').disabled = false;
+    save(); renderTimer();
+  }
+
+  function resumeTimer(){
+    if(timer.status!=='paused') return;
+    timer.startedAt = Date.now();
+    timer.status='running';
+    log('TIMER_RESUME', { mode: timer.mode, taskId: timer.taskId, remainingMs: timer.remainingMs });
+    tickHandle = setInterval(tick, 250);
+    $('#btnPause').disabled = false; $('#btnResume').disabled = true;
+    save(); renderTimer();
+  }
+
+  function stopTimer(){
+    if(!timer || timer.status==='idle') return;
+    // credit worked time if in work mode
+    let elapsed = 0;
+    if(timer.status==='running'){
+      elapsed = Date.now() - timer.startedAt;
+    }
+    const spent = timer.mode==='work' ? Math.min(timer.remainingMs, elapsed) : 0;
+    if(spent>0) pushWorkTime(spent);
+
+    log('TIMER_STOP', { mode: timer.mode, taskId: timer.taskId, remainingMs: timer.remainingMs });
+
+    clearInterval(tickHandle); tickHandle=null;
+    timer = getTimerDefaults();
+    save(); renderTimer();
+    $('#btnStart').disabled = false; $('#btnPause').disabled = true; $('#btnResume').disabled = true; $('#btnStop').disabled = true;
+  }
+
+  function completeTimer(){
+    // called when countdown reaches 0
+    if(timer.mode==='work'){
+      timer.pomsDone = (timer.pomsDone||0) + 1;
+      pushWorkTime( (timer.mode==='work') ? (timer.durationWorkMs) : 0 );
+      log('POMODORO_COMPLETE', { taskId: timer.taskId, name: timer.meta.name, tags: timer.meta.tags, project: timer.meta.project, urgency: timer.meta.urgency, mode: 'work' });
+      $('#pomsDone').textContent = timer.pomsDone;
+      // auto-switch to break but keep idle state for manual start
+      timer.mode='break';
+      $('#pomoMode').value='break';
+      timer.remainingMs = timer.durationBreakMs;
+      timer.status='idle';
+      clearInterval(tickHandle); tickHandle=null;
+      $('#btnStart').disabled = false; $('#btnPause').disabled = true; $('#btnResume').disabled = true; $('#btnStop').disabled = true;
+    } else {
+      log('POMODORO_COMPLETE', { taskId: timer.taskId, mode: 'break' });
+      timer.mode='work'; $('#pomoMode').value='work'; timer.remainingMs = timer.durationWorkMs; timer.status='idle';
+      clearInterval(tickHandle); tickHandle=null;
+      $('#btnStart').disabled = false; $('#btnPause').disabled = true; $('#btnResume').disabled = true; $('#btnStop').disabled = true;
+    }
+    save(); renderTimer(); renderReports();
+  }
+
+  function tick(){
+    if(!timer || timer.status!=='running') return;
+    const elapsed = Date.now() - timer.startedAt;
+    const remaining = Math.max(0, timer.remainingMs - elapsed);
+    $('#timerDisplay').textContent = fmtMs(remaining);
+    document.title = `⏱ ${fmtMs(remaining)} — Wiki Task Manager`;
+    $('#timerStatus').textContent = `${timer.mode==='work'?'Work':'Break'} • ${timer.meta.name || 'Untitled'}`;
+    if(remaining<=0){ completeTimer(); return; }
+  }
+
+  function renderTimer(){
+    ensureTimer();
+    const ms = timer.mode==='work'? timer.durationWorkMs : timer.durationBreakMs;
+    if(timer.status==='idle'){
+      $('#timerDisplay').textContent = fmtMs(timer.remainingMs ?? ms);
+      $('#timerStatus').textContent = 'Idle';
+      document.title = 'Wiki Task Manager — Single File';
+    }
+    $('#pomsDone').textContent = timer.pomsDone||0;
+  }
+
+  function renderTimerTaskSelect(){
+    const sel = $('#timerTask');
+    const optNone = (id,label)=>{const o=document.createElement('option'); o.value=id; o.textContent=label; return o;}
+    sel.innerHTML='';
+    sel.appendChild(optNone('', '— (No bind) —'));
+    tasks.forEach(t=> sel.appendChild(optNone(t.id, t.name)) );
+  }
+
+  // ---------- Rendering: Tasks ----------
+  function renderTasks(){
+    const tb = $('#tasksTbody'); tb.innerHTML='';
+    const f = {
+      name: $('#fName').value.trim().toLowerCase(),
+      tag: $('#fTag').value.trim().toLowerCase(),
+      project: $('#fProject').value.trim().toLowerCase(),
+      urgency: $('#fUrgency').value
+    };
+    const rows = tasks.filter(t=>{
+      const hayName = t.name.toLowerCase().includes(f.name||'');
+      const hayTag = (f.tag? t.tags.some(x=>x.toLowerCase().includes(f.tag)): true);
+      const hayProj = t.project.toLowerCase().includes(f.project||'');
+      const hayUrg = (f.urgency? t.urgency===f.urgency : true);
+      return hayName && hayTag && hayProj && hayUrg;
+    });
+
+    rows.forEach((t,i)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="mono">${i+1}</td>
+        <td><input class="mono" data-edit="name" data-id="${t.id}" type="text" value="${escapeHtml(t.name)}"/></td>
+        <td><input class="mono" data-edit="tags" data-id="${t.id}" type="text" value="${escapeHtml(t.tags.join(', '))}"/></td>
+        <td><input class="mono" data-edit="project" data-id="${t.id}" type="text" value="${escapeHtml(t.project)}"/></td>
+        <td>
+          <select data-edit="urgency" data-id="${t.id}">
+            ${['Low','Medium','High'].map(u=>`<option ${u===t.urgency?'selected':''}>${u}</option>`).join('')}
+          </select>
+        </td>
+        <td class="nowrap">
+          <button class="btn" data-action="use" data-id="${t.id}">Use in Timer</button>
+          <button class="btn danger" data-action="del" data-id="${t.id}">Delete</button>
+        </td>`;
+      tb.appendChild(tr);
+    });
+
+    // wire edits/actions
+    $$('#tasksTbody [data-edit]').forEach(inp=>{
+      inp.addEventListener('change', e=>{
+        const id = e.target.getAttribute('data-id');
+        const key = e.target.getAttribute('data-edit');
+        let val = e.target.value;
+        if(key==='tags') val = parseTags(val);
+        updateTask(id, { [key]: val });
+      });
+    });
+    $$('#tasksTbody [data-action="del"]').forEach(btn=> btn.addEventListener('click', e=>{
+      const id = e.target.getAttribute('data-id');
+      if(confirm('Delete this task?')) deleteTask(id);
+    }));
+    $$('#tasksTbody [data-action="use"]').forEach(btn=> btn.addEventListener('click', e=>{
+      const id = e.target.getAttribute('data-id');
+      $('#timerTask').value = id; syncTimerFieldsFromSelection();
+      window.scrollTo({top: $('#timer').offsetTop - 48, behavior:'smooth'});
+    }));
+
+    $('#kpiTasks').textContent = String(tasks.length);
+  }
+
+  function escapeHtml(s){
+    return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
+  }
+
+  function syncTimerFieldsFromSelection(){
+    const id = $('#timerTask').value;
+    if(!id){ return; }
+    const t = tasks.find(x=>x.id===id); if(!t) return;
+    $('#timerName').value = t.name;
+    $('#timerTags').value = t.tags.join(', ');
+    $('#timerProject').value = t.project;
+    $('#timerUrgency').value = t.urgency;
+  }
+
+  // ---------- Logs ----------
+  function renderLogs(){
+    const tb = $('#logTbody'); tb.innerHTML='';
+    const q = $('#logSearch').value.trim().toLowerCase();
+    const type = $('#logType').value; const proj = $('#logProject').value.trim().toLowerCase();
+    const tag = $('#logTag').value.trim().toLowerCase(); const urg = $('#logUrgency').value;
+
+    const rows = logs.filter(l=>{
+      const text = JSON.stringify(l).toLowerCase();
+      const okQ = text.includes(q);
+      const okType = type? l.type===type : true;
+      const okProj = proj? (l.project||'').toLowerCase().includes(proj) : true;
+      const okTag = tag? (l.tags||[]).some(x=>x.toLowerCase().includes(tag)) : true;
+      const okUrg = urg? l.urgency===urg : true;
+      return okQ && okType && okProj && okTag && okUrg;
+    });
+
+    rows.forEach(l=>{
+      const tr = document.createElement('tr');
+      const metaParts = [];
+      if(l.name) metaParts.push(`<strong>${escapeHtml(l.name)}</strong>`);
+      if(l.project) metaParts.push(`<span class="soft">${escapeHtml(l.project)}</span>`);
+      if(l.tags && l.tags.length) metaParts.push(l.tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join(' '));
+      if(l.urgency) metaParts.push(`<span class="pill ${urgClass(l.urgency)}">${l.urgency}</span>`);
+      if(l.ms) metaParts.push(`<span class="soft">${mins(l.ms)} min</span>`);
+
+      tr.innerHTML = `
+        <td class="mono">${fmtTime(l.ts)}</td>
+        <td>${l.type}</td>
+        <td>${l.name? escapeHtml(l.name) : (findTaskName(l.taskId) || '')}</td>
+        <td>${metaParts.join(' ')}</td>`;
+      tb.appendChild(tr);
+    });
+  }
+
+  function findTaskName(id){ const t = tasks.find(x=>x.id===id); return t? t.name : null; }
+  function urgClass(u){ return u==='High'?'u-high': (u==='Low'?'u-low':'u-med'); }
+
+  // ---------- Reports ----------
+  function runReport(){
+    const group = $('#reportGroup').value; // task | tag | project | urgency
+    const tb = $('#reportTbody'); tb.innerHTML='';
+
+    // aggregate work minutes from WORK_TIME logs
+    const credits = logs.filter(l=>l.type==='WORK_TIME');
+    const map = new Map();
+
+    function push(key, row){
+      if(!map.has(key)) map.set(key, { items:new Set(), sessions:0, minutes:0, last:null });
+      const agg = map.get(key);
+      if(row.item) agg.items.add(row.item);
+      agg.minutes += row.minutes;
+      agg.sessions += row.sessions;
+      if(!agg.last || new Date(row.last)>new Date(agg.last)) agg.last = row.last;
+    }
+
+    credits.forEach(l=>{
+      const taskName = l.name || findTaskName(l.taskId) || 'Untitled';
+      const minutes = mins(l.ms||0);
+      const last = l.ts;
+      const tagsArr = Array.isArray(l.tags)? l.tags : [];
+      const groupKeys = {
+        task: [taskName],
+        project: [l.project || '(none)'],
+        urgency: [l.urgency || '(none)'],
+        tag: tagsArr.length? tagsArr : ['(none)']
+      }[group];
+
+      groupKeys.forEach(k=> push(k, { item: taskName, minutes, sessions: 0, last }));
+    });
+
+    // count completed work sessions per group from POMODORO_COMPLETE(work)
+    logs.filter(l=> l.type==='POMODORO_COMPLETE' && (l.mode==='work')).forEach(l=>{
+      const taskName = l.name || findTaskName(l.taskId) || 'Untitled';
+      const tagsArr = Array.isArray(l.tags)? l.tags : [];
+      const groupKeys = {
+        task: [taskName],
+        project: [l.project || '(none)'],
+        urgency: [l.urgency || '(none)'],
+        tag: tagsArr.length? tagsArr : ['(none)']
+      }[group];
+      groupKeys.forEach(k=> push(k, { item: taskName, minutes: 0, sessions: 1, last: l.ts }));
+    });
+
+    // render rows
+    Array.from(map.entries()).sort((a,b)=> (b[1].minutes - a[1].minutes)).forEach(([k,agg])=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(k)}</td>
+        <td class="mono">${agg.items.size}</td>
+        <td class="mono">${agg.sessions}</td>
+        <td class="mono">${agg.minutes}</td>
+        <td class="mono">${agg.last? fmtTime(agg.last): ''}</td>`;
+      tb.appendChild(tr);
+    });
+
+    log('REPORT_RUN', { dimension: group });
+    save();
+  }
+
+  function refreshKPI(){
+    const totalWorkMin = logs.filter(l=>l.type==='WORK_TIME').reduce((s,l)=> s + mins(l.ms||0), 0);
+    const poms = logs.filter(l=>l.type==='POMODORO_COMPLETE' && l.mode==='work').length;
+    $('#kpiMins').textContent = String(totalWorkMin);
+    $('#kpiPoms').textContent = String(poms);
+  }
+
+  // ---------- Import/Export ----------
+  function exportData(){
+    const blob = new Blob([JSON.stringify({tasks,logs,timer,settings}, null, 2)], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `wiki-task-manager-${Date.now()}.json`; a.click();
+  }
+  function importData(file){
+    const fr = new FileReader();
+    fr.onload = (e)=>{
+      try{
+        const data = JSON.parse(e.target.result);
+        tasks = data.tasks||[]; logs = data.logs||[]; timer = data.timer||null; settings = Object.assign({workMin:25, breakMin:5}, data.settings||{});
+        save();
+        renderTasks(); renderTimerTaskSelect(); renderLogs(); renderTimer(); runReport();
+        alert('Import successful.');
+      }catch(err){ alert('Import failed: '+err?.message); }
+    };
+    fr.readAsText(file);
+  }
+
+  // ---------- Wire UI ----------
+  function wire(){
+    // Add task
+    $('#btnAddTask').addEventListener('click', ()=>{
+      const name=$('#taskName').value, tags=$('#taskTags').value, project=$('#taskProject').value, urgency=$('#taskUrgency').value;
+      if(!name.trim()) { alert('Task name is required'); return; }
+      addTask({name,tags,project,urgency});
+      $('#taskName').value=''; $('#taskTags').value=''; $('#taskProject').value=''; $('#taskUrgency').value='Medium';
+    });
+
+    // Filters
+    ['#fName','#fTag','#fProject','#fUrgency'].forEach(sel=> $(sel).addEventListener('input', renderTasks));
+    $('#btnClearFilters').addEventListener('click', ()=>{ $('#fName').value=''; $('#fTag').value=''; $('#fProject').value=''; $('#fUrgency').value=''; renderTasks(); });
+
+    // Timer controls
+    $('#timerTask').addEventListener('change', syncTimerFieldsFromSelection);
+    $('#btnStart').addEventListener('click', startTimer);
+    $('#btnPause').addEventListener('click', pauseTimer);
+    $('#btnResume').addEventListener('click', resumeTimer);
+    $('#btnStop').addEventListener('click', stopTimer);
+    $('#pomoWork').addEventListener('change', ()=>{ settings.workMin=parseInt($('#pomoWork').value||25,10); save(); });
+    $('#pomoBreak').addEventListener('change', ()=>{ settings.breakMin=parseInt($('#pomoBreak').value||5,10); save(); });
+
+    // Logs
+    ['#logSearch','#logType','#logProject','#logTag','#logUrgency'].forEach(sel=> $(sel).addEventListener('input', renderLogs));
+    $('#btnClearLogFilters').addEventListener('click', ()=>{ $('#logSearch').value=''; $('#logType').value=''; $('#logProject').value=''; $('#logTag').value=''; $('#logUrgency').value=''; renderLogs(); });
+
+    // Reports
+    $('#btnRunReport').addEventListener('click', runReport);
+
+    // Import/Export
+    $('#btnExport').addEventListener('click', exportData);
+    $('#btnImport').addEventListener('click', ()=> $('#importFile').click());
+    $('#importFile').addEventListener('change', (e)=>{ const f=e.target.files?.[0]; if(f) importData(f); e.target.value=''; });
+  }
+
+  // ---------- Init ----------
+  function init(){
+    // sanitize timer
+    if(!timer){ timer = getTimerDefaults(); save(); }
+    // set inputs from settings
+    $('#pomoWork').value = settings.workMin||25; $('#pomoBreak').value = settings.breakMin||5;
+
+    wire();
+    renderTasks(); renderTimerTaskSelect(); renderLogs(); renderTimer(); runReport(); refreshKPI();
+  }
+
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ renderTimer(); }});
+  window.addEventListener('load', init);
+  </script>
+</body>
+</html>

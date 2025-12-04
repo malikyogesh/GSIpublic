@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Cascading Pomodoros — Timers (Compact 4, v10)</title>
+<style>
+  :root {
+    --bg:#0f1115; --card:#151924; --card2:#0e1420; --text:#e8ecf1; --muted:#9aa5b1;
+    --accent:#5ac8fa; --accent2:#7bd88f; --warn:#ffad60; --danger:#ff6b6b; --grid:#1e2430;
+  }
+  html,body { height:100%; background:var(--bg); color:var(--text); font:13px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+  h1,h2,h3 { margin: 0.2rem 0 0.6rem; }
+  .wrap { max-width:1400px; margin: 16px auto; padding: 0 12px; }
+
+  /* Toolbar */
+  .toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+  .toolbar .spacer { flex:1; }
+  .btn { background:var(--card); color:var(--text); border:1px solid var(--grid); padding:6px 8px; border-radius:8px; cursor:pointer; font-size:12px; }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .btn.accent { border-color:var(--accent); }
+  .btn.green { border-color:var(--accent2); }
+  .btn.warn { border-color:var(--warn); }
+  .btn.danger { border-color:var(--danger); }
+  .switch { display:flex; align-items:center; gap:6px; }
+  .switch label.inline { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); }
+
+  /* Grid — 4 across on desktops, compact gap */
+  .grid { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:8px; }
+  @media (max-width: 1000px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px)  { .grid { grid-template-columns: 1fr; } }
+
+  /* Card — compact but a bit taller (stacked inputs) */
+  .card { background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid var(--grid); border-radius:10px; padding:10px; min-height:220px; }
+  .timerhead { display:flex; align-items:center; gap:6px; margin-bottom:6px; flex-wrap:wrap; }
+  .badge { font-size:10px; padding:2px 6px; border:1px solid var(--grid); border-radius:999px; color:var(--muted); }
+  .name-input { flex:1; min-width:160px; }
+  .row { display:grid; grid-template-columns: 1fr; gap:6px; margin-bottom:6px; }
+  .row label { display:flex; flex-direction:column; font-size:11px; color:var(--muted); gap:4px; }
+  .row input, .row select { padding:6px 8px; border-radius:8px; border:1px solid var(--grid); background:#0b0e14; color:var(--text); font-size:12px; }
+  .timerface { display:flex; align-items:center; gap:10px; margin-top:4px; flex-wrap:wrap; }
+  .time { font-variant-numeric: tabular-nums; font-size:18px; letter-spacing:0.5px; min-width:62px; }
+  .progress { position:relative; height:7px; background:#121726; border:1px solid var(--grid); border-radius:999px; overflow:hidden; flex:1 1 120px; }
+  .progress > b { display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); width:0%; }
+  .muted { color:var(--muted); font-size:11px; }
+  .log, .reports { margin-top:14px; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { padding:6px 8px; border-bottom:1px dashed var(--grid); text-align:left; font-size:12px; }
+  .tabs { display:flex; gap:6px; margin:8px 0; }
+  .tabs .btn.active { background:#0b0f1a; border-color:var(--accent); }
+  .foot { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px;}
+  .sticky { position:sticky; bottom:10px; background:rgba(12,14,20,0.85); backdrop-filter: blur(6px); padding:8px; border:1px solid var(--grid); border-radius:10px; }
+
+  /* Deep Work */
+  .deepwork .timer-card { opacity:0.35; pointer-events:none; }
+  .deepwork .timer-card.active { opacity:1; pointer-events:auto; }
+  .deepwork .reports-blocker { position:relative; }
+  .deepwork .reports-blocker::after {
+    content: "Deep-Work Mode: reports disabled during session";
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    background:rgba(15,17,21,0.6); backdrop-filter: blur(2px);
+    color:var(--muted); font-weight:600; border-radius:12px;
+  }
+  .filters { display:flex; gap:8px; align-items:end; flex-wrap:wrap; margin-bottom:8px; }
+  .filters label { display:flex; flex-direction:column; font-size:12px; color:var(--muted); }
+  .pill { display:inline-flex; align-items:center; gap:6px; padding:6px 8px; border:1px solid var(--grid); border-radius:999px; background:#0b0f1a; }
+
+  .spacer { flex:1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Cascading Pomodoros</h1>
+  <div class="toolbar">
+    <div class="switch">
+      <input id="cascadeToggle" type="checkbox" />
+      <label for="cascadeToggle">Cascade (auto-start next)</label>
+    </div>
+    <div class="switch">
+      <input id="deepWorkToggle" type="checkbox" />
+      <label for="deepWorkToggle"><strong>Deep-Work Mode</strong></label>
+    </div>
+
+    <button id="startCascade" class="btn accent">Start Cascade</button>
+    <button id="pauseAll" class="btn warn">Pause Running</button>
+    <button id="resetAll" class="btn danger">Reset All</button>
+
+    <span class="spacer"></span>
+
+    <!-- Page background color + reset -->
+    <label class="inline">
+      <span>Page BG</span>
+      <input id="pageBgPicker" type="color" />
+    </label>
+    <button id="resetTheme" class="btn">Reset Colors</button>
+
+    <button id="exportTimersBtn" class="btn">Export Timers CSV</button>
+    <button id="importTimersBtn" class="btn">Import Timers CSV</button>
+    <input id="importFile" type="file" accept=".csv,text/csv" style="display:none" />
+
+    <button id="runTests" class="btn">Run Self-Tests</button>
+  </div>
+
+  <div id="timers" class="grid"></div>
+
+  <div class="log card">
+    <h2>Event Log</h2>
+    <div class="filters">
+      <label>From <input type="date" id="dateFrom"></label>
+      <label>To <input type="date" id="dateTo"></label>
+      <button id="applyDates" class="btn">Apply</button>
+      <span class="pill"><span class="muted">Range:</span><span id="rangeLabel">All</span></span>
+    </div>
+    <div class="foot">
+      <button id="exportLog" class="btn">Export Filtered Log CSV</button>
+      <span class="muted">Newest first. Timestamps are ISO.</span>
+    </div>
+    <table id="logTable">
+      <thead><tr><th>Time</th><th>Type</th><th>Timer</th><th>Task</th><th>Project</th><th>Tags</th><th>Elapsed (s)</th><th>Reason</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="reports card" id="reportsCard">
+    <h2>Reports</h2>
+    <div class="tabs">
+      <button class="btn active" data-tab="byTimer">By Timer</button>
+      <button class="btn" data-tab="byTask">By Task</button>
+      <button class="btn" data-tab="byProject">By Project</button>
+      <button class="btn" data-tab="byTag">By Tag</button>
+      <button class="btn" data-tab="interrupts">Top Interruptions</button>
+      <button class="btn" data-tab="daily">Daily Rollups</button>
+    </div>
+    <div class="foot">
+      <button id="exportSummary" class="btn">Export Current View</button>
+      <label class="switch"><input id="includeLive" type="checkbox"/><span>Include live time</span></label>
+    </div>
+    <div id="summary"></div>
+  </div>
+
+  <div id="mini" class="sticky muted"></div>
+
+  <div id="tests" class="card" style="margin-top:12px; display:none;">
+    <h3>Self-Tests</h3>
+    <pre id="testOutput"></pre>
+  </div>
+</div>
+
+<script>
+/* ===== Utilities ===== */
+function parseDuration(input) {
+  const s = String(input ?? "").trim();
+  if (!s) return 0;
+  if (/^\d+:\d+:\d+$/.test(s)) { const [h,m,sec]=s.split(':').map(n=>parseInt(n,10)); return (h*3600)+(m*60)+sec; }
+  if (/^\d+:\d+$/.test(s))    { const [m,sec]=s.split(':').map(n=>parseInt(n,10));   return (m*60)+sec; }
+  if (/^\d+$/.test(s))        { return parseInt(s,10)*60; }
+  let total=0; const rH=s.match(/(\d+)\s*h/i); if(rH) total+=parseInt(rH[1],10)*3600;
+             const rM=s.match(/(\d+)\s*m/i); if(rM) total+=parseInt(rM[1],10)*60;
+             const rS=s.match(/(\d+)\s*s/i); if(rS) total+=parseInt(rS[1],10);
+  return total;
+}
+function fmtMMSS(totalSeconds) {
+  const t = Math.max(0, Math.floor(totalSeconds||0));
+  const m = Math.floor(t/60); const r = t%60;
+  return `${m.toString().padStart(2,"0")}:${r.toString().padStart(2,"0")}`;
+}
+function nowISO(){ return new Date().toISOString(); }
+function escapeHtml(s){ return String(s??"").replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
+function csvEscapeField(v){ const s=(v==null)?"":String(v); return (/[",\n]/).test(s)?`"${s.replace(/"/g,'""')}"`:s; }
+function toCSVRows(rows){
+  if(!rows||!rows.length) return "";
+  const headers=Object.keys(rows[0]); const lines=[];
+  lines.push(headers.map(csvEscapeField).join(","));
+  for(const row of rows){ lines.push(headers.map(h=>csvEscapeField(row[h])).join(",")); }
+  return lines.join("\n");
+}
+function download(filename,text){
+  const blob=new Blob([text],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
+}
+function ymd(ts){ return String(ts).slice(0,10); }
+
+/* Color helpers */
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function hexToRgb(hex){
+  let h=String(hex||"").trim(); if(h[0]==="#") h=h.slice(1);
+  if(h.length===3) h=h.split("").map(c=>c+c).join("");
+  if(!/^[0-9a-fA-F]{6}$/.test(h)) return {r:21,g:25,b:36};
+  const n=parseInt(h,16); return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 };
+}
+function rgbToHex(r,g,b){
+  return "#"+[r,g,b].map(x=>clamp(Math.round(x),0,255).toString(16).padStart(2,"0")).join("");
+}
+function rgbToHsl(r,g,b){
+  r/=255; g/=255; b/=255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b);
+  let h,s,l=(max+min)/2;
+  if(max===min){ h=s=0; }
+  else{
+    const d=max-min;
+    s=l>0.5? d/(2-max-min) : d/(max+min);
+    switch(max){
+      case r: h=(g-b)/d + (g<b?6:0); break;
+      case g: h=(b-r)/d + 2; break;
+      case b: h=(r-g)/d + 4; break;
+    }
+    h/=6;
+  }
+  return {h,s,l};
+}
+function hslToRgb(h,s,l){
+  let r,g,b;
+  if(s===0){ r=g=b=l; }
+  else{
+    const hue2rgb=(p,q,t)=>{ if(t<0) t+=1; if(t>1) t-=1;
+      if(t<1/6) return p+(q-p)*6*t;
+      if(t<1/2) return q;
+      if(t<2/3) return p+(q-p)*(2/3 - t)*6;
+      return p;
+    };
+    const q = l < 0.5 ? l*(1+s) : l+s-l*s;
+    const p = 2*l - q;
+    r=hue2rgb(p,q,h+1/3); g=hue2rgb(p,q,h); b=hue2rgb(p,q,h-1/3);
+  }
+  return { r:Math.round(r*255), g:Math.round(g*255), b:Math.round(b*255) };
+}
+function adjustLightness(hex, delta){
+  const {r,g,b}=hexToRgb(hex); let {h,s,l}=rgbToHsl(r,g,b);
+  l = clamp(l + delta/100, 0, 1); const rgb=hslToRgb(h,s,l);
+  return rgbToHex(rgb.r,rgb.g,rgb.b);
+}
+
+/* ===== State ===== */
+const DEFAULT_TIMER = (id)=>({
+  id, name:"", task:"", project:"", tags:"",
+  durationSec:25*60, remainingSec:25*60,
+  running:false, startedAt:null, elapsedAcc:0,
+  color:""
+});
+const DEFAULT_COUNT = 4;
+let state={
+  cascade:false, deepWork:false, dateFrom:"", dateTo:"",
+  pageBg:"#0f1115",
+  timers:Array.from({length:DEFAULT_COUNT},(_,i)=>DEFAULT_TIMER(i)),
+  log:[], runningTimerId:null
+};
+/* storage for this build */
+const STORAGE="cascading_pomos_v10";
+function load(){
+  try{
+    const raw=localStorage.getItem(STORAGE); if(!raw) return;
+    const saved=JSON.parse(raw); Object.assign(state, saved);
+    state.timers = (state.timers||[]).map((t,i)=>({
+      ...DEFAULT_TIMER(i),
+      ...t,
+      id:i,
+      durationSec:Number(t.durationSec)||1500,
+      remainingSec:Number(t.remainingSec ?? t.durationSec) || 1500,
+      elapsedAcc:Number(t.elapsedAcc)||0,
+      running:!!t.running,
+      color: String(t.color||"")
+    }));
+  }catch(e){}
+}
+function save(){
+  localStorage.setItem(STORAGE, JSON.stringify({
+    cascade:state.cascade, deepWork:state.deepWork, dateFrom:state.dateFrom, dateTo:state.dateTo,
+    pageBg:state.pageBg, timers:state.timers, log:state.log, runningTimerId:state.runningTimerId
+  }));
+}
+load();
+/* apply bg on load */
+document.documentElement.style.setProperty('--bg', state.pageBg||"#0f1115");
+
+/* ===== Date filter helpers ===== */
+function inRange(ts){
+  const d=ymd(ts); if(state.dateFrom && d<state.dateFrom) return false;
+  if(state.dateTo && d>state.dateTo) return false; return true;
+}
+
+/* ===== Render: Timers ===== */
+const timersEl=document.getElementById("timers");
+function isRunnable(t){ return Number.isFinite(t?.durationSec) && t.durationSec>0; }
+function progressPct(t){ if(!t||!t.durationSec) return 0; const used=t.durationSec-t.remainingSec; return Math.max(0,Math.min(100,(used/t.durationSec)*100)); }
+function disableIfNonActive(idx){
+  if(!state.deepWork) return ""; if(state.runningTimerId==null) return "";
+  return (state.runningTimerId===idx) ? "" : "disabled";
+}
+function cardStyle(t){
+  if(!t.color) return "";
+  const bg1 = adjustLightness(t.color, -8);
+  const bg2 = adjustLightness(t.color, -24);
+  const brd = adjustLightness(t.color, -35);
+  return `background: linear-gradient(180deg, ${bg1}, ${bg2}); border-color:${brd};`;
+}
+function progFillStyle(t){
+  if(!t.color) return "";
+  const p1 = adjustLightness(t.color, 8);
+  const p2 = adjustLightness(t.color, -8);
+  return `background: linear-gradient(90deg, ${p1}, ${p2});`;
+}
+function renderTimers(){
+  timersEl.innerHTML="";
+  state.timers.forEach((t,idx)=>{
+    const active = state.runningTimerId===idx;
+    const card=document.createElement("div");
+    card.className="card timer-card"+(active?" active":"");
+    if(state.deepWork){ card.classList.add("timer-card"); }
+    card.setAttribute("style", cardStyle(t));
+    const displayName = (t.name||"").trim() || `Timer ${idx+1}`;
+    card.innerHTML=`
+      <div class="timerhead">
+        <span class="badge">#${idx+1}</span>
+        <input class="name-input" data-k="name" data-i="${idx}" placeholder="Timer name (optional)" value="${escapeHtml(t.name||"")}"/>
+        <span class="spacer"></span>
+        <label class="inline"><span>Color</span><input type="color" data-k="color" data-i="${idx}" value="${escapeHtml(t.color||"#5ac8fa")}" /></label>
+        <button class="btn danger" data-act="delete" data-i="${idx}">Delete</button>
+      </div>
+      <div class="row">
+        <label>Task<input data-k="task" data-i="${idx}" value="${escapeHtml(t.task)}" placeholder="e.g., Draft section"/></label>
+        <label>Project<input data-k="project" data-i="${idx}" value="${escapeHtml(t.project)}" placeholder="e.g., Blog Alpha"/></label>
+        <label>Tags (comma)<input data-k="tags" data-i="${idx}" value="${escapeHtml(t.tags)}" placeholder="e.g., writing,deep-work"/></label>
+        <label>Duration (mm:ss or m)<input data-k="duration" data-i="${idx}" value="${fmtMMSS(t.durationSec)}"/></label>
+      </div>
+      <div class="timerface">
+        <div class="time" id="time-${idx}">${fmtMMSS(t.remainingSec)}</div>
+        <div class="progress"><b id="prog-${idx}" style="width:${progressPct(t)}%; ${progFillStyle(t)}"></b></div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="btn green"  data-act="start" data-i="${idx}" ${disableIfNonActive(idx)}>Start</button>
+          <button class="btn"        data-act="pause" data-i="${idx}" ${t.running?"":"disabled"}>Pause</button>
+          <button class="btn accent" data-act="resume" data-i="${idx}" ${(!t.running&&t.remainingSec<t.durationSec)?"":"disabled"}>Resume</button>
+          <button class="btn danger" data-act="stop" data-i="${idx}" ${(!t.running&&t.remainingSec===t.durationSec)?"disabled":""}>Stop</button>
+          <button class="btn"        data-act="copy" data-i="${idx}" title="Duplicate this timer as a new card">Copy</button>
+        </div>
+      </div>
+      <div class="muted" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <span>Status: ${t.running?"Running":"Idle"} · Elapsed segment: ${fmtMMSS(t.elapsedAcc)}</span>
+        <span class="spacer"></span>
+        <label style="display:flex; align-items:center; gap:6px;">
+          <select data-k="reason" data-i="${idx}" ${active?"":"disabled"}>
+            <option value="call">call</option>
+            <option value="DM">DM</option>
+            <option value="email">email</option>
+            <option value="meeting">meeting</option>
+          </select>
+          <button class="btn" data-act="interrupt" data-i="${idx}" ${active?"":"disabled"}>Interrupt</button>
+        </label>
+      </div>
+    `;
+    timersEl.appendChild(card);
+  });
+}
+
+/* ===== Log & Reports ===== */
+const logBody=document.querySelector("#logTable tbody");
+function filteredLog(){ return state.log.filter(e=>inRange(e.ts)); }
+function renderLog(){
+  const rows=filteredLog().slice();
+  logBody.innerHTML = rows.map(e => (
+    `<tr><td>${e.ts}</td><td>${e.type}</td><td>${(e.timer??0)+1}</td>
+     <td>${escapeHtml(e.task)}</td><td>${escapeHtml(e.project)}</td>
+     <td>${escapeHtml(e.tags)}</td><td>${e.elapsedSec ?? ""}</td><td>${e.reason ?? ""}</td></tr>`
+  )).join("");
+}
+const summaryEl=document.getElementById("summary");
+let currentTab="byTimer";
+const tabs=document.querySelectorAll(".tabs .btn");
+tabs.forEach(b=>b.addEventListener("click",()=>{ tabs.forEach(x=>x.classList.remove("active")); b.classList.add("active"); currentTab=b.dataset.tab; renderSummary(); }));
+function groupAndSum(keysFn, includeLive){
+  const acc=new Map(); function add(k,sec){ if(!k)k="(none)"; acc.set(k,(acc.get(k)||0)+sec); }
+  for(const e of filteredLog()){
+    if(e.type==="Pause"||e.type==="Stop"||e.type==="Complete"){ const keys=keysFn(e); const delta=Number(e.elapsedSec||0); keys.forEach(k=>add(k,delta)); }
+  }
+  if(includeLive && state.runningTimerId!=null){
+    const rt=state.timers[state.runningTimerId];
+    if(rt && rt.running && rt.startedAt){ const delta=Math.max(0,Math.floor((Date.now()-rt.startedAt)/1000));
+      const keys=keysFn({task:rt.task,project:rt.project,tags:rt.tags,timer:rt.id}); keys.forEach(k=>add(k,delta));
+    }
+  }
+  return Array.from(acc.entries()).map(([key,seconds])=>({key,seconds})).sort((a,b)=>b.seconds-a.seconds);
+}
+function splitTags(s){ if(!s) return ["(none)"]; return s.split(",").map(x=>x.trim()).filter(Boolean); }
+function drawTable(headers, rows){
+  summaryEl.innerHTML = `
+    <table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map(r=>`<tr><td>${escapeHtml(r.key)}</td><td>${r.sessions??""}</td><td>${fmtMMSS(r.total??r.seconds)}</td></tr>`).join("")}</tbody></table>`;
+}
+function withCounts(rows, keyFn){
+  const counts=new Map();
+  for(const e of filteredLog()){
+    if(e.type==="Pause"||e.type==="Stop"||e.type==="Complete"){
+      const k=keyFn( currentTab==="byTimer" ? String((e.timer??0)+1)
+               : currentTab==="byTask" ? (e.task||"(none)")
+               : currentTab==="byProject" ? (e.project||"(none)")
+               : (splitTags(e.tags)[0]||"(none)") );
+      counts.set(k,(counts.get(k)||0)+1);
+    }
+  }
+  return rows.map(r=>({ key:r.key, sessions:counts.get(r.key)||0, total:r.seconds }));
+}
+function topInterruptions(limit=3){
+  const c=new Map(); for(const e of filteredLog()){ if(e.type==="Interrupt"){ c.set(e.reason,(c.get(e.reason)||0)+1); } }
+  return Array.from(c.entries()).map(([reason,count])=>({reason,count})).sort((a,b)=>b.count-a.count).slice(0,limit);
+}
+function dailyRollups(){
+  const days=new Map();
+  for(const e of filteredLog()){
+    const d=ymd(e.ts);
+    if(!days.has(d)) days.set(d,{seconds:0, interruptions:0});
+    if(e.type==="Pause"||e.type==="Stop"||e.type==="Complete"){ days.get(d).seconds += Number(e.elapsedSec||0); }
+    if(e.type==="Interrupt"){ days.get(d).interruptions += 1; }
+  }
+  return Array.from(days.entries()).map(([date,v])=>({date,seconds:v.seconds,interruptions:v.interruptions})).sort((a,b)=>a.date.localeCompare(b.date));
+}
+function renderSummary(){
+  const includeLive=document.getElementById("includeLive").checked;
+  if(currentTab==="byTimer") {
+    const rows=groupAndSum(e=>[String((e.timer??0)+1)],includeLive);
+    drawTable(["Timer","# Sessions","Total"], withCounts(rows, k=>k));
+  } else if(currentTab==="byTask") {
+    const rows=groupAndSum(e=>[e.task||"(none)"],includeLive);
+    drawTable(["Task","# Sessions","Total"], withCounts(rows, k=>k));
+  } else if(currentTab==="byProject") {
+    const rows=groupAndSum(e=>[e.project||"(none)"],includeLive);
+    drawTable(["Project","# Sessions","Total"], withCounts(rows, k=>k));
+  } else if(currentTab==="byTag") {
+    const rows=groupAndSum(e=>splitTags(e.tags),includeLive);
+    drawTable(["Tag","# Sessions","Total"], withCounts(rows, k=>k));
+  } else if(currentTab==="interrupts") {
+    const top=topInterruptions(3);
+    summaryEl.innerHTML = `
+      <h3>Top 3 Interruption Sources</h3>
+      <table><thead><tr><th>Reason</th><th>Count</th></tr></thead>
+      <tbody>${top.map(t=>`<tr><td>${t.reason}</td><td>${t.count}</td></tr>`).join("")}</tbody></table>`;
+  } else if(currentTab==="daily") {
+    const rows=dailyRollups();
+    summaryEl.innerHTML=`
+      <table><thead><tr><th>Date</th><th>Total Tracked</th><th># Interruptions</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr><td>${r.date}</td><td>${fmtMMSS(r.seconds)}</td><td>${r.interruptions}</td></tr>`).join("")}</tbody></table>`;
+  }
+}
+
+/* ===== Engine (CASCADE FIX) ===== */
+let tickHandle=null;
+function startTick(){ if(!tickHandle) tickHandle=setInterval(onTick,250); }
+function stopTick(){ if(tickHandle){ clearInterval(tickHandle); tickHandle=null; } }
+function anyRunning(){ return state.timers.some(t=>t.running); }
+function nextTimerIndex(from){
+  for(let i=Math.max(0,from|0); i<state.timers.length; i++){
+    const t=state.timers[i];
+    if(isRunnable(t) && !t.running) return i;
+  }
+  return null;
+}
+function onTick(){
+  const id=state.runningTimerId; if(id==null) return;
+  const t=state.timers[id]; if(!t||!t.running) return;
+  const elapsed=Math.max(0,Math.floor((Date.now()-t.startedAt)/1000));
+  const remain=Math.max(0, t.durationSec - (t.elapsedAcc+elapsed));
+  t.remainingSec=remain;
+  const face=document.getElementById(`time-${id}`); if(face) face.textContent=fmtMMSS(remain);
+  const prog=document.getElementById(`prog-${id}`); if(prog) prog.style.width=`${progressPct(t)}%`;
+
+  if(remain<=0){
+    // PRE-COMPUTE the next index BEFORE closing this segment (fix)
+    const nextIdx = state.cascade ? nextTimerIndex(id+1) : null;
+
+    commitSegment(id,"Complete");
+    beepFinish();
+
+    if(state.cascade && nextIdx!=null){
+      doStart(nextIdx,true); // immediate start of next
+    } else {
+      state.runningTimerId=null;
+      stopTick();
+    }
+    save(); renderTimers(); updateMini(); renderSummary();
+  }
+}
+function guardSingleRunner(newId){ if(state.runningTimerId!=null && state.runningTimerId!==newId){ doPause(state.runningTimerId,true); } }
+function doStart(i){
+  guardSingleRunner(i);
+  const t=state.timers[i];
+  t.remainingSec=t.durationSec; t.running=true; t.startedAt=Date.now(); t.elapsedAcc=0; state.runningTimerId=i;
+  pushLog({ts:nowISO(),type:"Start",timer:i,task:t.task,project:t.project,tags:t.tags});
+  save(); renderTimers(); updateMini(); renderSummary(); startTick(); applyDeepWorkClass();
+}
+function doPause(i,silent=false){
+  const t=state.timers[i]; if(!t.running) return;
+  const delta=Math.max(0,Math.floor((Date.now()-t.startedAt)/1000));
+  t.elapsedAcc+=delta; t.running=false; t.startedAt=null; state.runningTimerId=null;
+  if(!silent) pushLog({ts:nowISO(),type:"Pause",timer:i,task:t.task,project:t.project,tags:t.tags,elapsedSec:delta});
+  save(); renderTimers(); updateMini(); renderSummary(); if(!anyRunning()) stopTick(); applyDeepWorkClass();
+}
+function doResume(i){
+  guardSingleRunner(i);
+  const t=state.timers[i]; if(t.running) return;
+  t.running=true; t.startedAt=Date.now(); state.runningTimerId=i;
+  pushLog({ts:nowISO(),type:"Resume",timer:i,task:t.task,project:t.project,tags:t.tags});
+  save(); renderTimers(); updateMini(); renderSummary(); startTick(); applyDeepWorkClass();
+}
+function commitSegment(i,type="Stop"){
+  const t=state.timers[i];
+  const delta=Math.max(0,Math.floor((Date.now()-(t.startedAt||Date.now()))/1000));
+  const total=t.elapsedAcc+delta;
+  t.running=false; t.startedAt=null; t.elapsedAcc=0; t.remainingSec=t.durationSec; state.runningTimerId=null;
+  pushLog({ts:nowISO(),type,timer:i,task:t.task,project:t.project,tags:t.tags,elapsedSec:total});
+  save(); renderTimers(); updateMini(); renderSummary(); if(!anyRunning()) stopTick(); applyDeepWorkClass();
+}
+function doStop(i){
+  const t=state.timers[i];
+  if(t.running){ commitSegment(i,"Stop"); } else {
+    t.elapsedAcc=0; t.remainingSec=t.durationSec;
+    pushLog({ts:nowISO(),type:"Stop",timer:i,task:t.task,project:t.project,tags:t.tags,elapsedSec:0});
+    save(); renderTimers(); updateMini(); renderSummary();
+  }
+}
+
+/* ===== Copy / Interrupt / Delete ===== */
+function doCopy(i, opts={}) {
+  const src = state.timers[i];
+  const newId = state.timers.length;
+  const clone = {
+    ...DEFAULT_TIMER(newId),
+    name: src.name, task: src.task, project: src.project, tags: src.tags,
+    durationSec: src.durationSec, remainingSec: src.durationSec,
+    color: src.color, running:false, startedAt:null, elapsedAcc:0
+  };
+  const insertAt = (typeof opts.insertAt === "number" && opts.insertAt>=0 && opts.insertAt<=state.timers.length)? opts.insertAt : (i+1);
+  state.timers.splice(insertAt, 0, clone);
+  state.timers.forEach((t,idx)=>t.id=idx);
+  if(state.runningTimerId!=null && state.runningTimerId >= insertAt) { state.runningTimerId += 1; }
+  save(); renderTimers(); renderSummary(); updateMini();
+  pushLog({ ts: nowISO(), type: "Copy", timer: i, task: src.task, project: src.project, tags: src.tags });
+}
+function doInterrupt(i, reason){ const t=state.timers[i]; pushLog({ts:nowISO(),type:"Interrupt",timer:i,task:t.task,project:t.project,tags:t.tags,reason}); renderSummary(); }
+function doDelete(i){
+  const t = state.timers[i];
+  const name = (t.name||"").trim() || `Timer ${i+1}`;
+  const isRunning = t.running; let msg = `Delete "${name}"?`; if (isRunning) msg += `\nThis timer is running and will be stopped.`;
+  if (!confirm(msg)) return; if (isRunning) doStop(i);
+  state.timers.splice(i,1); state.timers.forEach((x,idx)=>x.id=idx);
+  if (state.runningTimerId!=null) { if (state.runningTimerId === i) state.runningTimerId = null; else if (state.runningTimerId > i) state.runningTimerId -= 1; }
+  save(); renderTimers(); renderSummary(); renderLog(); updateMini();
+}
+
+/* ===== Export / Import Timers ===== */
+function timersToExportRows(){
+  return state.timers.map((t,idx)=>({
+    index: idx+1, id: t.id, name: t.name, task: t.task, project: t.project, tags: t.tags,
+    durationSec: t.durationSec, duration: fmtMMSS(t.durationSec),
+    remainingSec: t.remainingSec, remaining: fmtMMSS(t.remainingSec),
+    running: t.running ? 1 : 0, color: t.color || ""
+  }));
+}
+function exportTimersCSV(){
+  const rows = timersToExportRows(); const csv = toCSVRows(rows);
+  download(`timers-${new Date().toISOString().slice(0,19)}.csv`, csv);
+}
+function parseCSV(text){
+  const rows=[]; let i=0, field="", row=[], inQuotes=false;
+  function pushField(){ row.push(field); field=""; }
+  function pushRow(){ rows.push(row); row=[]; }
+  while(i<text.length){
+    const ch=text[i++];
+    if(inQuotes){
+      if(ch==='"' ){ if(text[i]==='"'){ field+='"'; i++; } else { inQuotes=false; } }
+      else{ field+=ch; }
+    }else{
+      if(ch===','){ pushField(); }
+      else if(ch==='"'){ inQuotes=true; }
+      else if(ch==='\r'){ }
+      else if(ch==='\n'){ pushField(); pushRow(); }
+      else{ field+=ch; }
+    }
+  }
+  pushField(); if(row.length>1 || rows.length===0 || row.some(x=>x!=="")) pushRow();
+  return rows;
+}
+function rowsToObjects(rows){
+  if(!rows.length) return [];
+  const headers = rows[0].map(h=>String(h||"").trim());
+  return rows.slice(1).map(r=>{
+    const o={}; headers.forEach((h,idx)=>o[h]=r[idx]??""); return o;
+  });
+}
+function normalizeDurationFromObject(o, keySec, keyTextFallback){
+  const rawSec = o[keySec];
+  if(rawSec!=null && String(rawSec).trim()!==""){
+    const n = Number(rawSec); if(Number.isFinite(n)) return Math.max(0, Math.floor(n));
+  }
+  const rawText = o[keyTextFallback];
+  if(rawText!=null && String(rawText).trim()!==""){ return parseDuration(String(rawText)); }
+  return null;
+}
+function importFromCSVText(text, mode){
+  try{
+    const rawRows = parseCSV(text); const objs = rowsToObjects(rawRows);
+    if(!objs.length){ alert("No rows found in CSV."); return; }
+    const imported = objs.map((o,idx)=>{
+      const lc = {}; Object.keys(o).forEach(k=>lc[k.toLowerCase().trim()]=o[k]);
+      const name = lc["name"] ?? "", task = lc["task"] ?? "", project = lc["project"] ?? "", tags = lc["tags"] ?? "";
+      let durationSec = normalizeDurationFromObject(lc, "durationsec", "duration"); if(durationSec==null) durationSec = 1500;
+      let remainingSec = normalizeDurationFromObject(lc, "remainingsec", "remaining"); if(remainingSec==null) remainingSec = durationSec;
+      const color = String(lc["color"]||"");
+      return { id: idx, name:String(name||""), task:String(task||""), project:String(project||""), tags:String(tags||""),
+        durationSec:Number(durationSec)||1500, remainingSec:Number(remainingSec)||Number(durationSec)||1500,
+        running:false, startedAt:null, elapsedAcc:0, color };
+    });
+    if(mode==="replace"){ state.timers = imported.map((t,i)=>({...t, id:i})); }
+    else { const base = state.timers.length; imported.forEach((t,k)=> state.timers.push({...t, id: base+k})); }
+    state.runningTimerId=null; save(); renderTimers(); renderSummary(); updateMini();
+    alert(`Imported ${imported.length} timers (${mode}).`);
+  }catch(e){
+    console.error(e); alert("Failed to import CSV: " + (e && e.message ? e.message : e));
+  }
+}
+
+/* ===== DOM wiring ===== */
+document.getElementById("cascadeToggle").checked=!!state.cascade;
+document.getElementById("cascadeToggle").addEventListener("change",(e)=>{ state.cascade=!!e.target.checked; save(); });
+
+document.getElementById("deepWorkToggle").checked=!!state.deepWork;
+document.getElementById("deepWorkToggle").addEventListener("change",(e)=>{ state.deepWork=!!e.target.checked; save(); applyDeepWorkClass(); });
+
+document.getElementById("startCascade").addEventListener("click",()=>{
+  state.cascade = true; document.getElementById("cascadeToggle").checked = true;
+  const idx=nextTimerIndex(0);
+  if(idx!=null){ doStart(idx,true); }
+});
+document.getElementById("pauseAll").addEventListener("click",()=>{ if(state.runningTimerId!=null) doPause(state.runningTimerId); });
+document.getElementById("resetAll").addEventListener("click",()=>{
+  if(!confirm("Reset all timers and clear the event log?")) return;
+  state.timers=Array.from({length:DEFAULT_COUNT},(_,i)=>DEFAULT_TIMER(i));
+  state.log=[]; state.runningTimerId=null; state.cascade=false; state.deepWork=false; state.pageBg="#0f1115";
+  stopTick(); save();
+  document.getElementById("cascadeToggle").checked=false; document.getElementById("deepWorkToggle").checked=false;
+  document.getElementById("pageBgPicker").value=state.pageBg; document.documentElement.style.setProperty('--bg', state.pageBg);
+  renderTimers(); renderLog(); renderSummary(); updateMini(); applyDeepWorkClass();
+});
+
+/* Export/Import */
+document.getElementById("exportTimersBtn").addEventListener("click", exportTimersCSV);
+document.getElementById("importTimersBtn").addEventListener("click", ()=> document.getElementById("importFile").click());
+document.getElementById("importFile").addEventListener("change", (e)=>{
+  const f = e.target.files && e.target.files[0]; if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    const text = String(reader.result||"");
+    const replace = confirm("Import CSV:\nOK = REPLACE existing timers\nCancel = APPEND");
+    importFromCSVText(text, replace ? "replace" : "append"); e.target.value = "";
+  };
+  reader.readAsText(f);
+});
+
+/* Page background picker + reset */
+const pageBgPicker = document.getElementById("pageBgPicker");
+pageBgPicker.value = state.pageBg || "#0f1115";
+pageBgPicker.addEventListener("input",(e)=>{
+  const hex = String(e.target.value||"#0f1115");
+  state.pageBg = hex; document.documentElement.style.setProperty('--bg', hex); save();
+});
+document.getElementById("resetTheme").addEventListener("click", ()=>{
+  if(!confirm("Reset page background and all timer colors to defaults?")) return;
+  state.pageBg = "#0f1115"; state.timers.forEach(t=>t.color="");
+  save(); document.documentElement.style.setProperty('--bg', state.pageBg);
+  pageBgPicker.value = state.pageBg; renderTimers();
+});
+
+/* Export log/summary */
+document.getElementById("exportLog").addEventListener("click",()=>{
+  const csv=toCSVRows(filteredLog().slice().reverse());
+  download(`timer-log-${new Date().toISOString().slice(0,19)}.csv`, csv);
+});
+document.getElementById("exportSummary").addEventListener("click",()=>{
+  const includeLive=document.getElementById("includeLive").checked;
+  let rows=[];
+  if(currentTab==="byTimer"){
+    rows=groupAndSum(e=>[String((e.timer??0)+1)],includeLive).map(r=>({Key:r.key,Seconds:r.seconds,Human:fmtMMSS(r.seconds)}));
+  } else if(currentTab==="byTask"){
+    rows=groupAndSum(e=>[e.task||"(none)"],includeLive).map(r=>({Key:r.key,Seconds:r.seconds,Human:fmtMMSS(r.seconds)}));
+  } else if(currentTab==="byProject"){
+    rows=groupAndSum(e=>[e.project||"(none)"],includeLive).map(r=>({Key:r.key,Seconds:r.seconds,Human:fmtMMSS(r.seconds)}));
+  } else if(currentTab==="byTag"){
+    rows=groupAndSum(e=>splitTags(e.tags),includeLive).map(r=>({Key:r.key,Seconds:r.seconds,Human:fmtMMSS(r.seconds)}));
+  } else if(currentTab==="interrupts"){
+    const top=topInterruptions(10).map(t=>({Reason:t.reason,Count:t.count}));
+    const csv=toCSVRows(top); download(`interruptions-top-${new Date().toISOString().slice(0,19)}.csv`,csv); return;
+  } else if(currentTab==="daily"){
+    const rowsDaily=dailyRollups().map(r=>({Date:r.date,Seconds:r.seconds,Human:fmtMMSS(r.seconds),Interruptions:r.interruptions}));
+    const csv=toCSVRows(rowsDaily); download(`daily-rollups-${new Date().toISOString().slice(0,19)}.csv`,csv); return;
+  }
+  const csv=toCSVRows(rows); download(`summary-${currentTab}-${new Date().toISOString().slice(0,19)}.csv`,csv);
+});
+document.getElementById("includeLive").addEventListener("change",renderSummary);
+
+/* Date filters */
+const dateFromEl=document.getElementById("dateFrom");
+const dateToEl=document.getElementById("dateTo");
+const rangeLabel=document.getElementById("rangeLabel");
+dateFromEl.value=state.dateFrom||""; dateToEl.value=state.dateTo||"";
+document.getElementById("applyDates").addEventListener("click",()=>{
+  state.dateFrom=dateFromEl.value||""; state.dateTo=dateToEl.value||""; save();
+  rangeLabel.textContent=(state.dateFrom||"…")+" to "+(state.dateTo||"…"); renderLog(); renderSummary();
+});
+
+/* Delegated handlers */
+timersEl.addEventListener("input",(e)=>{
+  const i=Number(e.target.getAttribute("data-i")); const k=e.target.getAttribute("data-k"); if(Number.isNaN(i)||!k) return;
+  const t=state.timers[i];
+  if(k==="duration"){
+    if(t.running){ e.target.value=fmtMMSS(t.durationSec); return; }
+    const sec=parseDuration(e.target.value); t.durationSec=sec; t.remainingSec=sec; e.target.value=fmtMMSS(sec);
+  } else if(k==="task"||k==="project"||k==="tags"||k==="name"){ t[k]=e.target.value; }
+  else if(k==="color"){ t.color = String(e.target.value||""); }
+  save(); renderSummary(); if(k==="color") renderTimers();
+});
+timersEl.addEventListener("click",(e)=>{
+  const act=e.target.getAttribute("data-act"); if(!act) return;
+  const i=Number(e.target.getAttribute("data-i")); if(Number.isNaN(i)) return;
+  if(act==="start") doStart(i);
+  if(act==="pause") doPause(i);
+  if(act==="resume") doResume(i);
+  if(act==="stop") doStop(i);
+  if(act==="copy") doCopy(i);
+  if(act==="delete") doDelete(i);
+  if(act==="interrupt"){
+    const sel=timersEl.querySelector(`select[data-k="reason"][data-i="${i}"]`);
+    if(sel) doInterrupt(i, sel.value);
+  }
+});
+
+/* Smart Resume + mini + deep-work */
+function smartResume(){
+  if(state.runningTimerId!=null){
+    const t=state.timers[state.runningTimerId];
+    if(t && t.running && t.startedAt){
+      const diff=Math.max(0,Math.floor((Date.now()-t.startedAt)/1000));
+      const remaining=Math.max(0,t.durationSec-(t.elapsedAcc+diff));
+      t.remainingSec=remaining;
+      if(remaining===0){
+        const nextIdx = state.cascade ? nextTimerIndex(t.id+1) : null;
+        commitSegment(t.id,"Complete");
+        if(state.cascade && nextIdx!=null) doStart(nextIdx,true);
+      } else { startTick(); }
+    }
+  }
+}
+const mini=document.getElementById("mini");
+function updateMini(){
+  const id=state.runningTimerId;
+  if(id==null){ mini.innerHTML="No active timer."; return; }
+  const t=state.timers[id];
+  mini.innerHTML = `
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <span>Running:</span><b>${escapeHtml((t.name||t.task||"Timer "+(id+1)))}</b>
+      <span>·</span><span>${fmtMMSS(t.remainingSec)} remaining</span>
+      <span>·</span><span>Project:</span><b>${escapeHtml(t.project||"(none)")}</b>
+      <span>·</span><span>Tags:</span><b>${escapeHtml(t.tags||"(none)")}</b>
+      <span class="spacer"></span>
+      <select id="miniReason">
+        <option value="call">call</option><option value="DM">DM</option><option value="email">email</option><option value="meeting">meeting</option>
+      </select>
+      <button class="btn" id="miniInterrupt">Interrupt</button>
+      <button class="btn" id="miniPause">Pause</button>
+      <button class="btn danger" id="miniStop">Stop</button>
+    </div>`;
+  document.getElementById("miniPause").onclick=()=>{ if(state.runningTimerId!=null) doPause(state.runningTimerId); };
+  document.getElementById("miniStop").onclick=()=>{ if(state.runningTimerId!=null) doStop(state.runningTimerId); };
+  document.getElementById("miniInterrupt").onclick=()=>{ const r=document.getElementById("miniReason").value; if(state.runningTimerId!=null) doInterrupt(state.runningTimerId,r); };
+}
+function applyDeepWorkClass(){
+  const running = state.runningTimerId!=null && state.timers[state.runningTimerId]?.running;
+  if(state.deepWork && running){
+    document.body.classList.add("deepwork");
+    document.getElementById("reportsCard").classList.add("reports-blocker");
+  }else{
+    document.body.classList.remove("deepwork");
+    document.getElementById("reportsCard").classList.remove("reports-blocker");
+  }
+}
+
+/* ===== Self-Tests (includes CASCADE test) ===== */
+document.getElementById("runTests").addEventListener("click", runTests);
+function expect(name, cond){ return {name, pass:!!cond, msg:cond?"OK":"FAILED"}; }
+function runTests(){
+  const out=[];
+  out.push(expect("parse '25' => 1500", parseDuration("25")===1500));
+  out.push(expect("fmt 61 => 01:01", fmtMMSS(61)==="01:01"));
+
+  // Cascade: two 1s timers; start 0; auto-advance to 1
+  const snapshot = JSON.stringify(state); const prev = localStorage.getItem(STORAGE);
+  try{
+    state.cascade = true;
+    state.timers = [
+      { ...DEFAULT_TIMER(0), name:"A", durationSec:1, remainingSec:1 },
+      { ...DEFAULT_TIMER(1), name:"B", durationSec:1, remainingSec:1 }
+    ];
+    save(); renderTimers();
+    doStart(0);
+    // Fast-forward: pretend it started 2s ago
+    state.timers[0].startedAt = Date.now() - 2000;
+    onTick(); // should complete 0 and start 1 immediately
+    out.push(expect("cascade auto-started next", state.runningTimerId === 1 && state.timers[1].running === true));
+  } finally {
+    if(prev!=null) localStorage.setItem(STORAGE, prev);
+    state = JSON.parse(snapshot); save(); renderTimers(); renderLog(); renderSummary(); updateMini(); applyDeepWorkClass();
+  }
+
+  const ok=out.filter(x=>x.pass).length;
+  const pre=document.getElementById("testOutput");
+  pre.textContent = out.map(x=>`${x.pass?"✅":"❌"} ${x.name} — ${x.msg}`).join("\n")+`\n\n${ok}/${out.length} passed.`;
+  document.getElementById("tests").style.display="block";
+}
+
+/* Bootstrap */
+function pushLog(e){ state.log.unshift(e); save(); renderLog(); }
+renderTimers(); renderLog(); renderSummary(); updateMini(); smartResume(); applyDeepWorkClass();
+/* Safari audio gesture */
+document.addEventListener('click', function once(){ document.removeEventListener('click', once); }, {once:true});
+</script>
+</body>
+</html>
