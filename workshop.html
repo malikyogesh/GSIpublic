@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workshop Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary': '#4f46e5',
+                        'secondary': '#8b5cf6',
+                        'accent': '#facc15',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styles for better table visibility and fixed header */
+        .table-sticky-header thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f9fafb; /* Light gray background */
+            z-index: 10;
+        }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen p-4 sm:p-8 font-sans">
+
+    <div id="app" class="max-w-6xl mx-auto">
+        <header class="mb-8">
+            <!-- Editable Workshop Title -->
+            <input
+                type="text"
+                value="Workshop Agenda Planner"
+                class="text-4xl font-extrabold text-gray-900 mb-2 w-full bg-transparent border-none focus:outline-none focus:ring-0 p-0 m-0"
+                style="line-height: 1.2;"
+                aria-label="Workshop Title"
+            />
+            <p class="text-gray-600 text-sm">Set the start time and build your agenda. Times auto-calculate based on duration.</p>
+        </header>
+
+        <!-- Workshop Start Time Input and Total Duration Display -->
+        <div class="bg-white p-6 rounded-xl shadow-lg mb-8 border border-primary/20 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="workshop-start" class="block text-lg font-medium text-gray-700 mb-2">
+                    Workshop Start Day & Time:
+                </label>
+                <input
+                    type="datetime-local"
+                    id="workshop-start"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:border-primary focus:ring-primary shadow-sm transition duration-150 ease-in-out text-lg"
+                    onchange="calculateTimes()"
+                >
+            </div>
+            <div class="md:self-end">
+                <div id="total-duration-display" class="p-3 bg-indigo-50 text-indigo-800 rounded-lg text-lg font-semibold shadow-inner text-center border border-indigo-200">
+                    Total Duration: 0 minutes
+                </div>
+            </div>
+        </div>
+
+        <!-- Agenda Table and Controls -->
+        <div class="bg-white p-6 rounded-xl shadow-lg border border-primary/20">
+            
+            <!-- Header with title and buttons (Top-aligned) -->
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold text-gray-800">Agenda Items</h2>
+                <div class="flex space-x-3">
+                    <!-- NEW CSV Export Button -->
+                    <button
+                        onclick="exportCSV()"
+                        class="flex items-center px-4 py-2 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition duration-200 transform hover:scale-105 text-sm"
+                        title="Export Agenda to CSV"
+                    >
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Export CSV
+                    </button>
+
+                    <!-- Existing HTML Export Button -->
+                    <button
+                        onclick="exportAgenda()"
+                        class="flex items-center px-4 py-2 bg-secondary text-white font-semibold rounded-lg shadow-md hover:bg-secondary/90 transition duration-200 transform hover:scale-105 text-sm"
+                        title="Export Agenda to HTML Table"
+                    >
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Export HTML
+                    </button>
+                    <button
+                        onclick="addRow()"
+                        class="flex items-center px-4 py-2 bg-primary text-white font-semibold rounded-lg shadow-md hover:bg-primary/90 transition duration-200 transform hover:scale-105 text-sm"
+                        title="Add New Activity"
+                    >
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Add Activity
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto rounded-lg shadow-inner border border-gray-200 h-[60vh] table-sticky-header">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <!-- Column Widths Adjusted -->
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[5%]">#</th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[20%]">Activity Type</th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[8%]">Duration (min)</th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-primary uppercase tracking-wider w-[10%]">Start Time</th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-secondary uppercase tracking-wider w-[10%]">End Time</th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[20%]">Agenda / Topic</th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[15%]">Expected Outcome</th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[10%]">Follow-up</th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-[2%]"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="agenda-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Agenda rows will be appended here -->
+                    </tbody>
+                </table>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Datalist for Activity Type Suggestions -->
+    <datalist id="activity-types">
+        <option value="Icebreaker"></option>
+        <option value="Presentation"></option>
+        <option value="Discussion"></option>
+        <option value="Q&A"></option>
+        <option value="Group Work"></option>
+        <option value="Break"></option>
+        <option value="Lunch"></option>
+        <option value="Wrap-up & Feedback"></option>
+    </datalist>
+
+    <script>
+        const agendaBody = document.getElementById('agenda-body');
+        const workshopStartInput = document.getElementById('workshop-start');
+        let agendaItems = [];
+
+        // --- Utility Functions ---
+
+        /**
+         * Formats a Date object into a readable time string (e.g., "10:30 AM").
+         * @param {Date} date The Date object to format.
+         * @returns {string} The formatted time string.
+         */
+        function formatTime(date) {
+            if (!date || isNaN(date.getTime())) return '';
+            const options = { hour: '2-digit', minute: '2-digit', hour12: true };
+            return date.toLocaleTimeString('en-US', options);
+        }
+
+        /**
+         * Converts total minutes into H:M format for display (e.g., 90 -> 1h 30m).
+         * @param {number} totalMinutes
+         * @returns {string} The formatted duration string.
+         */
+        function formatDuration(totalMinutes) {
+            if (totalMinutes === 0) return '0 minutes';
+            if (totalMinutes < 60) return `${totalMinutes} minutes`;
+
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            let parts = [];
+            if (hours > 0) parts.push(`${hours}h`);
+            if (minutes > 0) parts.push(`${minutes}m`);
+            return parts.join(' ');
+        }
+
+
+        // --- Core Logic ---
+
+        /**
+         * Creates the HTML structure for a single agenda row.
+         * @param {number} index The index of the row in the agendaItems array.
+         * @returns {HTMLTableRowElement} The new table row element.
+         */
+        function createRowElement(index) {
+            const tr = document.createElement('tr');
+            tr.dataset.index = index;
+            tr.className = 'hover:bg-gray-50 transition duration-100';
+
+            const item = agendaItems[index];
+
+            // Helper to create common input elements
+            const createInputCell = (name, type = 'text', placeholder = '', value = '') => {
+                const td = document.createElement('td');
+                td.className = 'px-3 py-2 whitespace-nowrap';
+                const input = document.createElement('input');
+                input.type = type;
+                input.name = name;
+                input.placeholder = placeholder;
+                input.value = value;
+                // Font size text-xs
+                input.className = 'w-full p-1 border border-gray-200 rounded-md text-xs focus:ring-secondary focus:border-secondary';
+                input.oninput = (e) => {
+                    // Only duration change triggers recalculation
+                    if (name === 'duration') {
+                        if (input.value < 0) input.value = 0;
+                        calculateTimes();
+                    }
+                    // Update the local data model
+                    agendaItems[index][name] = e.target.value;
+                };
+                td.appendChild(input);
+                return td;
+            };
+
+            // Helper to create time display cells
+            const createTimeCell = (className = '') => {
+                const td = document.createElement('td');
+                // Font size text-xs
+                td.className = `px-3 py-2 whitespace-nowrap font-medium text-xs ${className}`;
+                return td;
+            };
+
+            // 1. Index
+            tr.appendChild(createTimeCell('text-gray-500').cloneNode(true));
+
+            // 2. Activity Type (Editable Input with Datalist for suggestions)
+            const typeTd = document.createElement('td');
+            typeTd.className = 'px-3 py-2 whitespace-nowrap';
+            const inputType = document.createElement('input');
+            inputType.type = 'text';
+            inputType.name = 'type';
+            inputType.placeholder = 'e.g., Icebreaker, Break';
+            inputType.value = item.type || 'Presentation';
+            inputType.setAttribute('list', 'activity-types'); 
+            // Font size text-xs
+            inputType.className = 'w-full p-1 border border-gray-200 rounded-md text-xs focus:ring-secondary focus:border-secondary';
+            inputType.oninput = (e) => agendaItems[index].type = e.target.value;
+            typeTd.appendChild(inputType);
+            tr.appendChild(typeTd);
+
+            // 3. Duration
+            tr.appendChild(createInputCell('duration', 'number', '30', item.duration || ''));
+
+            // 4. Start Time (Read-only display)
+            const startTimeTd = createTimeCell('text-primary');
+            startTimeTd.id = `start-time-${index}`;
+            tr.appendChild(startTimeTd);
+
+            // 5. End Time (Read-only display)
+            const endTimeTd = createTimeCell('text-secondary');
+            endTimeTd.id = `end-time-${index}`;
+            tr.appendChild(endTimeTd);
+
+            // 6. Agenda/Topic
+            tr.appendChild(createInputCell('agenda', 'text', 'Main Topic of Discussion', item.agenda || ''));
+
+            // 7. Outcome
+            tr.appendChild(createInputCell('outcome', 'text', 'Define measurable success criteria', item.outcome || ''));
+
+            // 8. Follow-up
+            tr.appendChild(createInputCell('followUp', 'text', 'Next steps / Owner', item.followUp || ''));
+
+            // 9. Remove Button
+            const removeTd = document.createElement('td');
+            removeTd.className = 'px-3 py-2 whitespace-nowrap text-right text-xs font-medium';
+            const removeBtn = document.createElement('button');
+            removeBtn.innerHTML = '<svg class="w-4 h-4 text-red-500 hover:text-red-700" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>';
+            removeBtn.onclick = () => removeRow(index);
+            removeBtn.title = 'Remove Activity';
+            removeTd.appendChild(removeBtn);
+            tr.appendChild(removeTd);
+
+            return tr;
+        }
+
+        /**
+         * Renders all agenda items to the table and attaches event listeners.
+         */
+        function renderAgenda() {
+            agendaBody.innerHTML = '';
+
+            agendaItems.forEach((item, index) => {
+                const tr = createRowElement(index);
+                agendaBody.appendChild(tr);
+                tr.querySelector('td:first-child').textContent = index + 1;
+            });
+
+            calculateTimes();
+        }
+
+        /**
+         * Calculates and updates the Start Time, End Time, and Total Duration.
+         * If isExport is true, it returns the calculated data array for use in export functions.
+         * @param {boolean} isExport If true, calculates and returns values without updating DOM.
+         * @returns {object|void} Returns { totalDurationMinutes, lastEndTime, calculatedAgenda } if isExport is true.
+         */
+        function calculateTimes(isExport = false) {
+            const workshopStart = workshopStartInput.value;
+            const totalDurationDisplay = document.getElementById('total-duration-display');
+            let totalDurationMinutes = 0;
+            let lastEndTime = null;
+            const calculatedAgenda = []; // To store results for export
+
+            if (!workshopStart) {
+                if (!isExport) {
+                    agendaItems.forEach((_, index) => {
+                        const startTimeEl = document.getElementById(`start-time-${index}`);
+                        const endTimeEl = document.getElementById(`end-time-${index}`);
+                        if (startTimeEl) startTimeEl.textContent = '';
+                        if (endTimeEl) endTimeEl.textContent = '';
+                    });
+                    totalDurationDisplay.textContent = 'Total Duration: 0 minutes';
+                }
+                return { totalDurationMinutes: 0, lastEndTime: null, calculatedAgenda };
+            }
+
+            let currentTime = new Date(workshopStart);
+            if (isNaN(currentTime.getTime())) return { totalDurationMinutes: 0, lastEndTime: null, calculatedAgenda };
+
+            agendaItems.forEach((item, index) => {
+                // Use data model for duration, ensuring it's a number
+                const duration = parseInt(item.duration, 10) || 0; 
+                
+                totalDurationMinutes += duration;
+
+                const startTimeFormatted = formatTime(currentTime);
+
+                if (!isExport) {
+                    const startTimeDisplay = document.getElementById(`start-time-${index}`);
+                    // 1. Set Start Time (DOM update)
+                    if (startTimeDisplay) startTimeDisplay.textContent = startTimeFormatted;
+                }
+
+                // 2. Calculate End Time
+                const endTime = new Date(currentTime.getTime() + duration * 60000); // 60000 ms per minute
+                const endTimeFormatted = formatTime(endTime);
+                lastEndTime = endTime;
+
+                if (!isExport) {
+                    // 3. Set End Time (DOM update)
+                    const endTimeDisplay = document.getElementById(`end-time-${index}`);
+                    if (endTimeDisplay) endTimeDisplay.textContent = endTimeFormatted;
+                }
+                
+                if (isExport) {
+                    calculatedAgenda.push({
+                        index: index + 1,
+                        type: item.type || '',
+                        duration: duration,
+                        startTime: startTimeFormatted,
+                        endTime: endTimeFormatted,
+                        agenda: item.agenda || '',
+                        outcome: item.outcome || '',
+                        followUp: item.followUp || ''
+                    });
+                }
+
+                // 4. Update Current Time for the NEXT item
+                currentTime = endTime;
+            });
+
+            if (isExport) {
+                return { totalDurationMinutes, lastEndTime, calculatedAgenda };
+            }
+
+            // Update Total Duration Display (only if not exporting)
+            let durationText = formatDuration(totalDurationMinutes);
+            totalDurationDisplay.textContent = `Total Duration: ${durationText}`;
+        }
+
+        // --- Export Logic ---
+
+        /**
+         * Generates and exports the current agenda to a new window as a styled HTML table.
+         */
+        function exportAgenda() {
+            if (agendaItems.length === 0) {
+                console.error("No agenda items to export."); 
+                return;
+            }
+
+            // Get the calculated times and duration using the export flag
+            const { totalDurationMinutes, lastEndTime, calculatedAgenda } = calculateTimes(true); 
+
+            const workshopStart = workshopStartInput.value ? new Date(workshopStartInput.value).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
+            const durationText = formatDuration(totalDurationMinutes);
+            const workshopEnd = lastEndTime ? formatTime(lastEndTime) : 'N/A';
+            
+            // Build the table rows using the calculated data
+            const tableRows = calculatedAgenda.map((item) => {
+                return `
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px; text-align: left; width: 5%;">${item.index}</td>
+                        <td style="padding: 10px; text-align: left; width: 20%;">${item.type}</td>
+                        <td style="padding: 10px; text-align: left; width: 8%;">${item.duration} min</td>
+                        <td style="padding: 10px; text-align: left; font-weight: 600; color: #4f46e5; width: 10%;">${item.startTime}</td>
+                        <td style="padding: 10px; text-align: left; font-weight: 600; color: #8b5cf6; width: 10%;">${item.endTime}</td>
+                        <td style="padding: 10px; text-align: left; width: 20%;">${item.agenda}</td>
+                        <td style="padding: 10px; text-align: left; width: 15%;">${item.outcome}</td>
+                        <td style="padding: 10px; text-align: left; width: 12%;">${item.followUp}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Complete HTML document structure with inline styles for portability
+            const exportHtml = `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Workshop Agenda Export</title>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+                        body { font-family: 'Inter', sans-serif; margin: 0; padding: 20px; background-color: #f9fafb; color: #1f2937; font-size: 14px; }
+                        .container { max-width: 1200px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+                        h1 { font-size: 28px; font-weight: 800; color: #111827; margin-bottom: 20px; border-bottom: 3px solid #4f46e5; padding-bottom: 10px; }
+                        .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; font-size: 14px; }
+                        .summary-item { padding: 15px; border-radius: 6px; background-color: #f0f3ff; border: 1px solid #d1d5db; }
+                        .summary-item strong { font-weight: 700; color: #4f46e5; display: block; margin-top: 4px; font-size: 16px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-radius: 6px; overflow: hidden;}
+                        th { background-color: #eef2ff; color: #3730a3; font-weight: 700; text-align: left; padding: 10px; border-bottom: 2px solid #4f46e5; text-transform: uppercase; font-size: 12px; }
+                        tr:nth-child(even) { background-color: #f9fafb; }
+                        td { padding: 10px; border-bottom: 1px solid #e5e7eb; font-size: 13px; vertical-align: top; }
+                        /* Print styles for clean PDF export */
+                        @media print {
+                            body { background-color: white; padding: 0; }
+                            .container { box-shadow: none; border: none; padding: 0; }
+                            .summary { border: 1px solid #ccc; padding: 10px; }
+                            .print-button { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1>Workshop Agenda Details</h1>
+                        
+                        <div class="summary">
+                            <div class="summary-item">Workshop Start: <strong>${workshopStart}</strong></div>
+                            <div class="summary-item">Total Duration: <strong>${durationText}</strong></div>
+                            <div class="summary-item">Estimated End Time: <strong>${workshopEnd}</strong></div>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 5%;">#</th>
+                                    <th style="width: 20%;">Activity Type</th>
+                                    <th style="width: 8%;">Duration</th>
+                                    <th style="width: 10%;">Start Time</th>
+                                    <th style="width: 10%;">End Time</th>
+                                    <th style="width: 20%;">Agenda / Topic</th>
+                                    <th style="width: 15%;">Outcome</th>
+                                    <th style="width: 12%;">Follow-up</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                        
+                        <div style="text-align: right; margin-top: 30px;" class="print-button">
+                            <button onclick="window.print()" style="padding: 10px 20px; background-color: #4f46e5; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">Print / Save as PDF</button>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const exportWindow = window.open('', '_blank');
+            exportWindow.document.write(exportHtml);
+            exportWindow.document.close();
+        }
+
+        /**
+         * Generates and exports the current agenda as a CSV file.
+         */
+        function exportCSV() {
+            if (agendaItems.length === 0) {
+                console.error("No agenda items to export."); 
+                return;
+            }
+
+            const { calculatedAgenda } = calculateTimes(true); 
+
+            // 1. Define Header
+            const headers = ["#", "Activity Type", "Duration (min)", "Start Time", "End Time", "Agenda / Topic", "Expected Outcome", "Follow-up"];
+            let csvContent = headers.map(h => `"${h}"`).join(",") + "\n"; // Enclose headers in quotes
+
+            // 2. Map Data Rows
+            calculatedAgenda.forEach(item => {
+                const row = [
+                    item.index,
+                    item.type,
+                    item.duration,
+                    item.startTime,
+                    item.endTime,
+                    item.agenda,
+                    item.outcome,
+                    item.followUp
+                ];
+                // Enclose fields in double quotes and escape internal quotes by doubling them ("")
+                csvContent += row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",") + "\n";
+            });
+
+            // 3. Create Blob and download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "workshop_agenda.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- User Actions ---
+
+        /**
+         * Adds a new, empty row to the agenda.
+         */
+        function addRow() {
+            const newItem = {
+                type: 'Presentation',
+                duration: 30, // Default duration
+                agenda: '',
+                outcome: '',
+                followUp: ''
+            };
+            agendaItems.push(newItem);
+            renderAgenda();
+            // Scroll to the new row
+            agendaBody.parentElement.scrollTop = agendaBody.parentElement.scrollHeight;
+        }
+
+        /**
+         * Removes a row from the agenda and re-renders the list.
+         * @param {number} index The index of the row to remove.
+         */
+        function removeRow(index) {
+            agendaItems.splice(index, 1);
+            renderAgenda();
+        }
+
+        // --- Initialization ---
+
+        // Initialize with one default row when the script loads
+        window.onload = () => {
+            // Set default date/time to now (for a quick start)
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const roundedMinutes = Math.ceil(now.getMinutes() / 5) * 5; 
+            const minutes = String(roundedMinutes % 60).padStart(2, '0');
+            
+            workshopStartInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            
+            // Add initial row and calculate times
+            if (agendaItems.length === 0) {
+                addRow();
+            } else {
+                calculateTimes();
+            }
+        }
+    </script>
+</body>
+</html>

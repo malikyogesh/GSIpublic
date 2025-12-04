@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Equinix Distributed AI & GSI Alignment – Interactive Brief</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-alt: #020617;
+      --card: #020617;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.15);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2937;
+      --danger: #f97373;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+    header {
+      margin-bottom: 2rem;
+    }
+    h1 {
+      font-size: clamp(1.9rem, 3vw, 2.4rem);
+      margin: 0 0 0.5rem;
+      letter-spacing: 0.03em;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      max-width: 48rem;
+    }
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .pill {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.85);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+      gap: 1.5rem;
+    }
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+    .sidebar {
+      position: sticky;
+      top: 1rem;
+      align-self: flex-start;
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 1rem;
+      border: 1px solid var(--border);
+      padding: 1rem 1rem 1.1rem;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
+    }
+    .sidebar h2 {
+      font-size: 0.95rem;
+      margin: 0 0 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+    }
+    .toc {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1rem;
+      font-size: 0.9rem;
+    }
+    .toc li {
+      margin-bottom: 0.35rem;
+    }
+    .toc a {
+      color: var(--text);
+      text-decoration: none;
+      padding: 0.15rem 0.15rem;
+      border-radius: 0.35rem;
+      display: block;
+    }
+    .toc a:hover {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .toc small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+    .gsi-filter-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      margin: 0.4rem 0 0.3rem;
+    }
+    .gsi-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.2rem;
+    }
+    .gsi-filter-btn {
+      flex: 1 1 46%;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #020617;
+      color: var(--muted);
+      font-size: 0.75rem;
+      padding: 0.35rem 0.4rem;
+      cursor: pointer;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .gsi-filter-btn[data-active="true"] {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .content {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 1rem;
+      border: 1px solid var(--border);
+      padding: 1.5rem 1.4rem 1.8rem;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.6);
+    }
+    section {
+      margin-bottom: 1.75rem;
+    }
+    section:last-of-type {
+      margin-bottom: 0.5rem;
+    }
+    h2.section-title {
+      font-size: 1.15rem;
+      margin: 0 0 0.35rem;
+    }
+    h3.section-kicker {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      margin: 0 0 0.9rem;
+    }
+    p {
+      margin: 0 0 0.6rem;
+      font-size: 0.92rem;
+      color: #e5e7eb;
+    }
+    .gsi-tagline {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    details {
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.9);
+      margin-bottom: 0.6rem;
+      padding: 0.4rem 0.8rem 0.6rem;
+    }
+    summary {
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+    summary::before {
+      content: "▸";
+      font-size: 0.7rem;
+      transition: transform 0.15s ease-out;
+      color: var(--accent);
+    }
+    details[open] summary::before {
+      transform: rotate(90deg);
+    }
+    details[open] {
+      border-color: var(--accent-soft);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.98));
+    }
+    .subtoc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin: 0.4rem 0 0.5rem;
+    }
+    .subtoc a {
+      font-size: 0.75rem;
+      padding: 0.14rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      text-decoration: none;
+      background: #020617;
+    }
+    .subtoc a:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      padding: 0.12rem 0.5rem;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+    .badge span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+    .footnote {
+      font-size: 0.75rem;
+      color: var(--muted);
+      border-top: 1px dashed var(--border);
+      padding-top: 0.6rem;
+      margin-top: 0.6rem;
+    }
+    .gsi-section {
+      border-top: 1px dashed var(--border);
+      padding-top: 1.25rem;
+      margin-top: 1.25rem;
+    }
+    .gsi-section:first-of-type {
+      border-top: none;
+      padding-top: 0;
+      margin-top: 0.4rem;
+    }
+    .muted {
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>Equinix Distributed AI &amp; GSI Alignment</h1>
+      <div class="subtitle">
+        Internal GTM strategy brief to align Equinix Distributed AI capabilities with TCS, HCLTech, Wipro, and Infosys AI portfolios. 
+        Use this page live in workshops or 1:1 prep – collapse sections, filter by GSI, and jump via the TOC.
+      </div>
+      <div class="pill-row">
+        <div class="pill">Internal Use Only</div>
+        <div class="pill">Distributed AI</div>
+        <div class="pill">GSI GTM</div>
+        <div class="pill">BFSI · Healthcare · Manufacturing</div>
+      </div>
+    </header>
+    <main>
+      <aside class="sidebar">
+        <h2>Navigation</h2>
+        <ul class="toc">
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#differentiators">Equinix Distributed AI – Differentiators</a></li>
+          <li>
+            <a href="#tcs">
+              TCS
+              <small>BFSI · Manufacturing · Healthcare</small>
+            </a>
+          </li>
+          <li>
+            <a href="#hcl">
+              HCLTech
+              <small>IP-led offerings · Engineering</small>
+            </a>
+          </li>
+          <li>
+            <a href="#wipro">
+              Wipro
+              <small>Consulting-led · GenAI platforms</small>
+            </a>
+          </li>
+          <li>
+            <a href="#infosys">
+              Infosys
+              <small>AI-first enterprise · Topaz</small>
+            </a>
+          </li>
+          <li><a href="#conclusion">Conclusion</a></li>
+        </ul>
+        <div class="gsi-filter-label">Focus by Partner</div>
+        <div class="gsi-filters">
+          <button class="gsi-filter-btn" data-gsi="all" data-active="true">All GSIs</button>
+          <button class="gsi-filter-btn" data-gsi="tcs">TCS</button>
+          <button class="gsi-filter-btn" data-gsi="hcl">HCLTech</button>
+          <button class="gsi-filter-btn" data-gsi="wipro">Wipro</button>
+          <button class="gsi-filter-btn" data-gsi="infosys">Infosys</button>
+        </div>
+        <p class="footnote">
+          Tip: Use the GSI filter during a live call to keep only that partner’s playbook visible while you talk.
+        </p>
+      </aside>
+      <div class="content">
+        <section id="overview">
+          <h3 class="section-kicker">Context</h3>
+          <h2 class="section-title">Overview</h2>
+          <p>This brief provides an internal go-to-market plan for aligning Equinix Distributed AI capabilities with Global Systems Integrators (GSIs) such as TCS, HCLTech, Wipro, and Infosys. It is designed to provide a concise, partner-specific view that will help Equinix solution architects and partner teams navigate joint AI opportunities, structure co-selling motions, and support field engagements with clear talking points and a mutual value narrative.</p>
+        </section>
+        <section id="differentiators">
+          <h3 class="section-kicker">Platform Narrative</h3>
+          <h2 class="section-title">Equinix Distributed AI – Differentiators for GSI Partnerships</h2>
+          <p>Equinix’s global platform offers unique value to GSIs looking to deliver AI, analytics, and digital transformation programs for their enterprise clients. While hyperscale clouds provide compute and managed AI services, Equinix provides the distributed, interconnected infrastructure that brings AI closer to data, users, and ecosystems, enabling GSIs to accelerate enterprise AI deployments. Key talking points include:</p>
+          <p>Vendor-Neutral Ecosystem &amp; Interconnection: Equinix is a neutral platform where enterprises can securely connect to multiple clouds, networks, SaaS providers, and AI ecosystems. This enables GSIs to design architectures that integrate multiple AI services (e.g. different cloud AI stacks, specialized ML tools, data marketplaces) while providing on-demand, high-bandwidth connectivity across providers.</p>
+          <p>Global Reach with Local Compliance: With 270+ data centers in 70+ metros across 6 continents, Equinix allows GSIs to host AI workloads close to users and data while meeting local data residency and regulatory requirements. This makes it easier to satisfy compliance (critical in BFSI and healthcare) without sacrificing scale.</p>
+          <p>Edge-to-Cloud Infrastructure &amp; Performance: Equinix is building a Distributed AI platform, enabling GPU-ready colocation, high-density power, interconnection to cloud AI services, and support for edge inference nodes. GSIs can deploy AI training infrastructure in regional hubs and inference workloads closer to end-users, reducing latency and improving real-time decision-making. This extends public cloud AI into a more distributed pattern – from training to inference – with reliable performance globally.</p>
+          <p>Data Privacy, Security &amp; Trust: Equinix’s interconnection model avoids routing sensitive data over the public internet. GSIs can leverage private connectivity and secure data exchange patterns to move or access data between enterprise locations, clouds, and partners, reducing exposure and improving control. Combined with Equinix’s physical and logical security, this creates a strong foundation for trusted AI deployments.</p>
+          <p>Simplified Deployment &amp; Co-Innovation: Equinix handles the underlying infrastructure complexity – power, cooling (including liquid cooling readiness), space, and interconnection. GSIs can focus on delivering AI platforms, applications, and managed services, while relying on Equinix as a consistent global foundation. Equinix can also support joint labs and innovation environments where GSIs and clients test AI architectures and solutions on demand, accelerating deployment timelines for joint solutions.</p>
+          <p>With these differentiators in mind, the following sections outline GSI-specific positioning, value alignment, and talking points to help Equinix teams pitch Distributed AI to maximize joint go-to-market success.</p>
+        </section>
+        <section id="tcs" class="gsi-section" data-gsi="tcs">
+          <div class="badge"><span class="dot"></span><span>GSI Playbook</span></div>
+          <h2 class="section-title">Tata Consultancy Services (TCS) – Opportunity &amp; Alignment</h2>
+          <p class="gsi-tagline muted">Use this section to prep or live-narrate your Equinix Distributed AI story for Tata Consultancy Services (TCS).</p>
+          <div class="subtoc">
+            <a href="#tcs-opportunity-analysis">Opportunity Analysis</a>
+            <a href="#tcs-equinix-pitch-angle-distributed-ai-extension">Equinix Pitch Angle – Distributed AI Extension</a>
+            <a href="#tcs-joint-high-impact-ai-use-cases">Joint High-Impact AI Use Cases</a>
+            <a href="#tcs-key-equinix-talking-points-for-tcs">Key Equinix Talking Points for TCS</a>
+            <a href="#tcs-strategic-questions-for-tcs">Strategic Questions for TCS</a>
+          </div>
+          <details id="tcs-opportunity-analysis" open>
+            <summary>Opportunity Analysis</summary>
+            <div>
+              <p>Opportunity Analysis: TCS is a leading global IT services provider with strengths in BFSI, manufacturing, healthcare, and public sector. TCS has made significant investments in AI and machine learning under its broader digital transformation and Business 4.0 themes. BFSI is TCS’s largest segment (about one-third of revenue), and the firm has been vocal about using AI to drive operational efficiency, customer experience, and risk management.</p>
+            </div>
+          </details>
+          <details id="tcs-equinix-pitch-angle-distributed-ai-extension">
+            <summary>Equinix Pitch Angle – Distributed AI Extension</summary>
+            <div>
+              <p>Equinix Pitch Angle – Distributed AI Extension: Equinix should position itself as a global extension of TCS’s AI capabilities, especially where clients need distributed, compliant, low-latency infrastructure to run AI workloads closer to data and users. While TCS builds a massive AI data center in India, Equinix can provide a distributed “halo” of infrastructure globally that allows TCS to take its AI solutions to new markets seamlessly.</p>
+              <p>Global Footprint &amp; Low-Latency Connectivity: Equinix can connect TCS’s India AI hub to global markets by hosting regional AI nodes in key metros (e.g. London, Frankfurt, New York, Singapore). This lets TCS deploy inference workloads and data processing close to end-users while securely linking its data center to client environments and public clouds.</p>
+              <p>Local Compliance &amp; Data Residency: For TCS’s banking and public sector clients concerned about sovereign data requirements, Equinix offers in-country hosting options and private connectivity to cloud and partner services. This helps TCS design AI solutions that keep sensitive data local while still connecting to global AI ecosystems, using Equinix’s colocation in 70+ metros. TCS can host sensitive AI workloads at Equinix to meet data residency requirements in different countries.</p>
+              <p>Multi-Cloud Integration: TCS frequently implements hybrid and multi-cloud solutions for clients. By using Equinix Fabric and Network Edge, TCS can simplify connectivity between multiple clouds (AWS, Azure, Google Cloud, etc.), AI platforms, and client-owned infrastructure. We enable seamless integration of TCS’s AI platforms with all major clouds, meeting clients where they are.</p>
+              <p>Speed to Market &amp; Scalability: By leveraging Equinix’s on-demand infrastructure and interconnection, TCS can rapidly deploy new AI environments in regions where its clients operate, without long lead times for building or expanding data centers. This accelerates deployment and helps TCS scale AI solutions for global enterprises in weeks rather than months. Equinix provides ready capacity (GPU-ready power, cooling, and connectivity) so TCS can focus on solutions and services.</p>
+            </div>
+          </details>
+          <details id="tcs-joint-high-impact-ai-use-cases">
+            <summary>Joint High-Impact AI Use Cases</summary>
+            <div>
+              <p>Joint High-Impact AI Use Cases: Opportunities to co-sell with TCS include:</p>
+              <p>Fraud Detection and Risk Analytics for BFSI: Deploy AI models for real-time fraud detection in banking across multiple regions by hosting inference nodes at Equinix facilities near major financial centers. Equinix can provide low-latency links between TCS AI models, client core banking systems, and cloud analytics tools, while keeping sensitive data flows private. TCS’s domain AI expertise combined with Equinix’s infrastructure can deliver a high-value proposition.</p>
+              <p>Smart Manufacturing &amp; Predictive Maintenance: TCS’s manufacturing clients often need industrial IoT and AI analytics close to production sites. Equinix can host edge AI infrastructure near plants to run TCS’s predictive maintenance models, connecting to both on-prem systems and cloud-based analytics. This reduces downtime and improves efficiency, making the joint proposition attractive to industrial clients.</p>
+              <p>Healthcare Analytics &amp; Supply Chain AI: For healthcare providers and pharma companies, Equinix can provide secure data aggregation points (e.g. data hubs) where TCS’s AI solutions analyze patient, clinical, or supply chain data. Using Equinix’s private connectivity, data can be exchanged securely between hospitals, labs, and cloud AI services. TCS’s AI insights combined with Equinix’s secure infrastructure can address regulatory and performance constraints.</p>
+              <p>Key Equinix Talking Points for TCS: When engaging TCS, emphasize how Equinix addresses their strategic needs:</p>
+            </div>
+          </details>
+          <details id="tcs-key-equinix-talking-points-for-tcs">
+            <summary>Key Equinix Talking Points for TCS</summary>
+            <div>
+              <p>Key Equinix Talking Points for TCS: When engaging TCS, emphasize how Equinix addresses their strategic needs:</p>
+              <p>Equinix’s global infrastructure helps TCS replicate its AI capabilities in key client markets quickly, without massive capex, accelerating TCS’s AI-led growth vision.</p>
+              <p>Edge and proximity solutions – highlight that Equinix can host AI inference nodes close to client locations, improving customer experience (low latency) and enabling new real-time AI use cases.</p>
+              <p>Data sovereignty and security – reinforce that Equinix’s data centers and private connectivity address regulatory concerns, helping TCS host sensitive workloads locally in a secure, compliant environment, complementing TCS’s focus on BFSI and public sector.</p>
+              <p>Ecosystem access – note that through Equinix, TCS can tap into a wide ecosystem of cloud, network, and AI service providers, making their solutions more flexible and future-proof. For example, Equinix’s partnerships with GPU cloud providers or AI service vendors can enrich TCS’s solutions (for instance, easily integrate a specific AI model provider via private connectivity).</p>
+              <p>Partner, not competitor – assure that Equinix is an enabler of TCS’s services, not a competing integrator or consulting firm. Our role is to provide the neutral, high-performance infrastructure behind the scenes, allowing TCS to maintain prime ownership of the client relationship.</p>
+            </div>
+          </details>
+          <details id="tcs-strategic-questions-for-tcs">
+            <summary>Strategic Questions for TCS</summary>
+            <div>
+              <p>Strategic Questions for TCS: To identify alignment opportunities, ask TCS:</p>
+              <p>“How will TCS extend its new AI data center’s capabilities to global clients? Are there regions where you see demand but lack local infrastructure? Equinix can help bridge that gap.”</p>
+              <p>“What challenges are your enterprise AI clients facing around data residency, compliance, and performance when deploying solutions outside India? We can host key components or data services in-country at Equinix facilities to meet compliance and performance requirements.”</p>
+              <p>“As TCS integrates AI into core offerings (e.g. core banking, insurance, manufacturing), how do you handle connectivity between on-prem systems and cloud AI services? Could automated, secure interconnection through Equinix simplify this for you and your clients?”</p>
+              <p>“Would access to an AI Solutions Lab in key regions help TCS demonstrate its AI capabilities to clients more effectively? Equinix can support co-branded labs or innovation centers where TCS and clients can experiment with multi-vendor AI architectures.”</p>
+              <p>“In co-sell situations, what value do you need from an infrastructure partner? Is it speed, compliance, ecosystem access – which of these resonate most for your current AI pursuits?”</p>
+            </div>
+          </details>
+        </section>
+        <section id="hcl" class="gsi-section" data-gsi="hcl">
+          <div class="badge"><span class="dot"></span><span>GSI Playbook</span></div>
+          <h2 class="section-title">HCLTech – Opportunity &amp; Alignment</h2>
+          <p class="gsi-tagline muted">Use this section to prep or live-narrate your Equinix Distributed AI story for HCLTech.</p>
+          <div class="subtoc">
+            <a href="#hcl-opportunity-analysis">Opportunity Analysis</a>
+            <a href="#hcl-equinix-pitch-angle-enabling-secure-distributed-ai-delivery">Equinix Pitch Angle – Enabling Secure, Distributed AI Delivery</a>
+            <a href="#hcl-joint-high-impact-ai-use-cases">Joint High-Impact AI Use Cases</a>
+            <a href="#hcl-key-equinix-talking-points-for-hcltech">Key Equinix Talking Points for HCLTech</a>
+            <a href="#hcl-strategic-questions-for-hcltech">Strategic Questions for HCLTech</a>
+          </div>
+          <details id="hcl-opportunity-analysis" open>
+            <summary>Opportunity Analysis</summary>
+            <div>
+              <p>Opportunity Analysis: HCLTech is a GSI known for blending IT services with IP-led products and engineering services. It has strong domain expertise in BFSI, healthcare, manufacturing, and technology, and has been actively positioning its AI and data capabilities.</p>
+              <p>HCLTech’s strategy often emphasizes “digital at scale” and productized solutions. It has platforms and offerings that embed AI into operations (e.g. automation, AIOps, customer engagement) and industry-specific solutions. HCLTech is investing in AI to modernize applications, infrastructure, and business processes for clients. Its client base includes global enterprises in regulated industries where compliance, performance, and sovereignty are critical.</p>
+            </div>
+          </details>
+          <details id="hcl-equinix-pitch-angle-enabling-secure-distributed-ai-delivery">
+            <summary>Equinix Pitch Angle – Enabling Secure, Distributed AI Delivery</summary>
+            <div>
+              <p>Equinix Pitch Angle – Enabling Secure, Distributed AI Delivery: Equinix should be positioned as the infrastructure layer that allows HCLTech to run AI workloads and data platforms in distributed, compliant, low-latency setups. Equinix effectively becomes the “invisible backbone” that makes HCLTech’s AI and analytics offerings globally available, performant, and regulation-aligned – a critical stance for BFSI and healthcare clients.</p>
+              <p>Infrastructure for Productized AI Solutions: As HCL productizes AI and automation offerings, Equinix can host these platforms closer to clients across multiple regions. This lets HCL deliver AI-as-a-service, AIOps platforms, and vertical solutions with better latency, reliability, and control than if everything ran only in a few centralized locations. Equinix’s platform supports global scaling of such productized services, by providing a ready global hosting environment.</p>
+              <p>Data Compliance &amp; Sovereignty: Highlight Equinix’s ability to support localized deployment of data platforms and AI services – helping HCL meet regional regulations for data residency and privacy. Equinix’s presence in multiple countries and metros, combined with secure interconnection to clouds and networks, allows HCL to design architectures that keep sensitive data in-country while connecting to other services as needed.</p>
+              <p>Hybrid Cloud Bridging &amp; Legacy Integration: HCL often helps clients modernize legacy systems while adopting cloud and AI. Equinix can provide the “bridge” where legacy systems, private infrastructure, and cloud AI services meet. By placing HCL-managed components at Equinix sites, clients can modernize step-by-step without big-bang migrations. This reinforces HCL’s position as a transformation partner and cloud-smart integrator with an added advantage of Equinix’s network.</p>
+              <p>Performance for Physical AI &amp; IoT: For HCL’s manufacturing and IoT engagements, Equinix can host edge compute nodes that run AI models close to factories, warehouses, and physical infrastructure. These nodes can connect to cloud analytics and HCL’s central platforms via private, low-latency links, enabling near real-time control and analytics. For example, HCL could deploy joint solutions where AI inference runs in Equinix sites near major logistics hubs, reducing latency across continents (e.g. from North America to Europe by leveraging Equinix sites in both).</p>
+            </div>
+          </details>
+          <details id="hcl-joint-high-impact-ai-use-cases">
+            <summary>Joint High-Impact AI Use Cases</summary>
+            <div>
+              <p>Joint High-Impact AI Use Cases: Specific examples to pursue with HCLTech include:</p>
+              <p>AI-Powered Financial Crime Compliance: HCL is evolving into a partner for financial institutions seeking AI-driven compliance and risk management. Equinix can provide secure, regional hubs where transaction data is aggregated and analyzed by HCL’s AI models, with connectivity to cloud and partners. This enables low-latency, in-region processing while maintaining compliance.</p>
+              <p>Hybrid Cloud Core Banking Modernization: Many banks need to modernize core systems while leveraging AI for risk, customer analytics, and personalization. HCL can use Equinix to host integration gateways, data hubs, and AI components that connect legacy cores, new digital channels, and cloud AI services. Equinix’s global footprint allows such architectures to be deployed regionally, increasing resilience and performance.</p>
+              <p>Industrial IoT Analytics &amp; Smart Factory: For manufacturing clients, HCL can deploy IoT gateways and AI analytics workloads at Equinix sites close to major factories and logistics hubs. This decreases latency and facilitates real-time decision-making, such as predictive maintenance and quality control.</p>
+              <p>Healthcare Data Hub and AI Insights: HCL works with healthcare and life sciences organizations; Equinix can act as a secure data exchange layer between hospitals, labs, and cloud AI services. HCL’s AI models can operate on data in Equinix, ensuring compliance and privacy. The combination allows advanced analytics such as patient flow optimization, diagnosis support, and drug trial analytics.</p>
+              <p>Key Equinix Talking Points for HCLTech: In discussions with HCL, emphasize:</p>
+            </div>
+          </details>
+          <details id="hcl-key-equinix-talking-points-for-hcltech">
+            <summary>Key Equinix Talking Points for HCLTech</summary>
+            <div>
+              <p>Key Equinix Talking Points for HCLTech: In discussions with HCL, emphasize:</p>
+              <p>Security and Trust: Equinix’s platform will reinforce HCL’s narrative on secure, compliant transformation by ensuring sensitive data flows are private and controlled. This is especially important in BFSI and healthcare, where missteps can be costly.</p>
+              <p>Performance and Reliability: With Equinix, HCL can guarantee better performance and uptime for AI-powered services – important for mission-critical workloads like financial crime compliance or healthcare analytics.</p>
+              <p>Scalability and Reach: HCL can leverage Equinix’s global footprint to expand its AI offerings into new geographies quickly, without the need to build physical infrastructure from scratch.</p>
+              <p>Cloud and Ecosystem Neutrality: Emphasize that Equinix does not compete with HCL’s services or with clouds; instead, it enhances HCL’s role as an orchestrator of multi-cloud and multi-partner solutions.</p>
+              <p>Innovation Partner: Equinix can support joint labs, proofs of concept, and demo environments where HCL can showcase AI solutions to clients, building a stronger co-innovation story.</p>
+              <p>Ecosystem &amp; Alliances: HCL has strong alliances (e.g. with Nvidia, cloud providers, and software vendors). Equinix provides the infrastructure where these alliances can converge in real deployments, reinforcing HCL’s ecosystem-driven strategy.</p>
+            </div>
+          </details>
+          <details id="hcl-strategic-questions-for-hcltech">
+            <summary>Strategic Questions for HCLTech</summary>
+            <div>
+              <p>Strategic Questions for HCLTech: To probe how we can work together, ask:</p>
+              <p>“Where do you see constraints in deploying your AI solutions globally – is it compliance, latency, or infrastructure availability?”</p>
+              <p>“How do you ensure your IP-led AI products perform consistently across geographies? Would localized infrastructure with predictable connectivity help?”</p>
+              <p>“Which clients are asking for more control over data residency and sovereignty? We can position Equinix as the neutral, in-country anchor for those deployments.”</p>
+              <p>“Where do you need an ecosystem hub to bring together multiple partners (cloud, AI vendors, data providers)? Equinix can serve as that physical and logical hub.”</p>
+              <p>“Would you benefit from a jointly branded AI lab or showcase environment to demonstrate end-to-end regulated-industry solutions with Equinix in the background?”</p>
+            </div>
+          </details>
+        </section>
+        <section id="wipro" class="gsi-section" data-gsi="wipro">
+          <div class="badge"><span class="dot"></span><span>GSI Playbook</span></div>
+          <h2 class="section-title">Wipro – Opportunity &amp; Alignment</h2>
+          <p class="gsi-tagline muted">Use this section to prep or live-narrate your Equinix Distributed AI story for Wipro.</p>
+          <div class="subtoc">
+            <a href="#wipro-opportunity-analysis">Opportunity Analysis</a>
+            <a href="#wipro-equinix-pitch-angle-accelerating-wipros-ai-first-solutions">Equinix Pitch Angle – Accelerating Wipro’s AI-First Solutions</a>
+            <a href="#wipro-joint-high-impact-ai-use-cases">Joint High-Impact AI Use Cases</a>
+            <a href="#wipro-key-equinix-talking-points-for-wipro">Key Equinix Talking Points for Wipro</a>
+            <a href="#wipro-strategic-questions-for-wipro">Strategic Questions for Wipro</a>
+          </div>
+          <details id="wipro-opportunity-analysis" open>
+            <summary>Opportunity Analysis</summary>
+            <div>
+              <p>Opportunity Analysis: Wipro is a GSI with a consulting-led approach, strong domain expertise in BFSI, healthcare, manufacturing, and technology, and a growing focus on AI and GenAI. Wipro has platforms and offerings around AI, analytics, automation, and digital operations, including its AI/ML platforms and solutions like Wipro HOLMES. It is investing heavily in AI, GenAI, and data platforms to differentiate its services.</p>
+              <p>Strategically, Wipro is positioning itself as a provider of AI-first solutions and services across industries, including industry-specific accelerators and managed AI offerings. Its clients often look for multi-cloud solutions with integrated AI capabilities, and Wipro needs a flexible infrastructure backbone to deploy and manage them – leveraging its global delivery and partnerships.</p>
+            </div>
+          </details>
+          <details id="wipro-equinix-pitch-angle-accelerating-wipros-ai-first-solutions">
+            <summary>Equinix Pitch Angle – Accelerating Wipro’s AI-First Solutions</summary>
+            <div>
+              <p>Equinix Pitch Angle – Accelerating Wipro’s AI-First Solutions: Equinix can be presented as the infrastructure and interconnection layer that accelerates Wipro’s AI and GenAI solutions globally. We help Wipro build and run distributed AI architectures that meet client requirements for latency, compliance, and performance, while also improving manageability and resilience.</p>
+              <p>Multi-Cloud and Hybrid Enabler: Wipro prides itself on strong multi-cloud capabilities. Equinix’s neutral platform and Fabric interconnection allow Wipro to design and operate complex hybrid AI architectures where data and workloads move between clouds and on-prem systems with low latency and high security. This complements Wipro’s cloud and AI strategy and strengthens its ability to deliver multi-cloud solutions.</p>
+              <p>Performance Boost for GenAI Applications: Many GenAI use cases (e.g. conversational AI, code generation, co-pilots, and personalized experiences) require low latency between users, applications, and model endpoints. Equinix can host model-serving infrastructure or inference nodes closer to users, and provide private connectivity to cloud-based models, reducing latency and improving user experience.</p>
+              <p>Global AI Lab and Demonstration Capability: Wipro often co-innovates with clients in innovation centers and labs. Equinix can support these efforts by providing a consistent, globally distributed infrastructure foundation for AI labs, where Wipro can demonstrate AI architectures, run PoCs, and showcase multi-cloud AI patterns under realistic latency and connectivity conditions, which complements Wipro’s own innovation centers.</p>
+              <p>Data Governance and Residency: Wipro’s clients in BFSI and healthcare often require data localization and strict governance. Equinix supports deployment patterns where data stays in-country or region while AI services and analytics connect via private interconnection. This helps Wipro design architectures that satisfy regulators and client risk teams, while still enabling advanced AI capabilities. Equinix’s presence in multiple markets ensures data residency and zoning are well-defined and auditable on Equinix’s platform.</p>
+            </div>
+          </details>
+          <details id="wipro-joint-high-impact-ai-use-cases">
+            <summary>Joint High-Impact AI Use Cases</summary>
+            <div>
+              <p>Joint High-Impact AI Use Cases: Potential co-sell/co-create scenarios with Wipro include:</p>
+              <p>Personalized Banking Assistant (GenAI for BFSI): Leverage Wipro’s BFSI expertise and AI capabilities to build GenAI-based assistants for retail banking and wealth management. Equinix can host AI inference infrastructure close to financial centers and connect securely to banks’ core systems and cloud AI services, reducing latency and improving performance. Wipro can use this as a differentiator for digital banking clients.</p>
+              <p>Smart Healthcare Platform: Combine Wipro’s PayerAI solution and healthcare expertise with Equinix’s secure, compliant infrastructure for data exchange between hospitals, payers, and cloud AI tools. This enables AI-driven claims processing, prior authorization, and patient engagement while keeping PHI secure and within regulatory boundaries.</p>
+              <p>Manufacturing Edge AI (Industry 4.0): Support Wipro’s manufacturing offerings by hosting edge AI nodes at Equinix sites near major industrial regions. Wipro’s AI models for predictive maintenance, quality inspection, and supply chain optimization can run closer to factories and warehouses, improving real-time decision-making and reducing production risks.</p>
+              <p>Enterprise IT Ops Automation (AI Ops): Wipro’s HOLMES has a strong automation and AIOps story. Equinix can provide the hosting foundation for AIOps platforms that need to ingest telemetry from data centers, clouds, and networks across regions. AI models can run in Equinix sites, optimizing operations in near real time.</p>
+              <p>Key Equinix Talking Points for Wipro: In engaging Wipro, focus on:</p>
+            </div>
+          </details>
+          <details id="wipro-key-equinix-talking-points-for-wipro">
+            <summary>Key Equinix Talking Points for Wipro</summary>
+            <div>
+              <p>Key Equinix Talking Points for Wipro: In engaging Wipro, focus on:</p>
+              <p>Enhancing Wipro’s AI Platforms: Equinix can make Wipro’s AI platforms and accelerators perform better and scale globally by providing the right combination of proximity, connectivity, and infrastructure.</p>
+              <p>Accelerating Time-to-Value: By using Equinix, Wipro can set up AI environments for clients more quickly, reducing infrastructure delays and accelerating outcomes. This agility helps Wipro impress clients and outpace competitors.</p>
+              <p>Risk Mitigation &amp; Control: Equinix’s model reduces risk for clients and for Wipro by enabling private data flows, localized hosting, and multi-cloud architectures that prevent lock-in. This can be a selling point for mission-critical AI deployments.</p>
+              <p>Joint Success Stories: Mention that many enterprises are already using Equinix for hybrid and multi-cloud architectures, and that we can jointly build AI-specific success stories around those foundations.</p>
+              <p>No Conflict with Wipro’s Services: Reiterate that Equinix does not compete with Wipro’s consulting, engineering, or managed services; rather, we provide the cutting-edge infrastructure that makes Wipro shine.</p>
+            </div>
+          </details>
+          <details id="wipro-strategic-questions-for-wipro">
+            <summary>Strategic Questions for Wipro</summary>
+            <div>
+              <p>Strategic Questions for Wipro: To guide discovery and align our value, ask Wipro:</p>
+              <p>“Wipro is integrating GenAI into offerings across BFSI, healthcare, and other verticals. Where do latency, data residency, or connectivity challenges arise most often? We can map those and see if distributed infrastructure can alleviate them.”</p>
+              <p>“How do you ensure consistent performance for clients using multi-cloud AI architectures? Would having a neutral enforcement point for connectivity and data exchange help you standardize and scale?”</p>
+              <p>“In multi-cloud deployments, how are you managing connectivity between AI services, data stores, and client environments? Is there a need to simplify or centralize this using interconnection?”</p>
+              <p>“Wipro’s emphasis on responsible AI means tight control over data. Are there clients where you need an in-country or regionally isolated AI zone? We would like to explore if that model fits any current client scenarios.”</p>
+              <p>“Would you be interested in jointly developing a reference architecture or solution blueprint that highlights Wipro + Equinix for a specific AI use case? This could accelerate our go-to-market and showcase innovation to customers.”</p>
+            </div>
+          </details>
+        </section>
+        <section id="infosys" class="gsi-section" data-gsi="infosys">
+          <div class="badge"><span class="dot"></span><span>GSI Playbook</span></div>
+          <h2 class="section-title">Infosys – Opportunity &amp; Alignment</h2>
+          <p class="gsi-tagline muted">Use this section to prep or live-narrate your Equinix Distributed AI story for Infosys.</p>
+          <div class="subtoc">
+            <a href="#infosys-opportunity-analysis">Opportunity Analysis</a>
+            <a href="#infosys-equinix-pitch-angle-empowering-infosys-ai-first-enterprise-journey">Equinix Pitch Angle – Empowering Infosys’ AI-First Enterprise Journey</a>
+            <a href="#infosys-joint-high-impact-ai-use-cases">Joint High-Impact AI Use Cases</a>
+            <a href="#infosys-key-equinix-talking-points-for-infosys">Key Equinix Talking Points for Infosys</a>
+            <a href="#infosys-strategic-questions-for-infosys">Strategic Questions for Infosys</a>
+          </div>
+          <details id="infosys-opportunity-analysis" open>
+            <summary>Opportunity Analysis</summary>
+            <div>
+              <p>Opportunity Analysis: Infosys is a leading IT services firm with a broad industry footprint and a strong focus on digital and AI. Infosys is actively investing in AI platforms, accelerators, and solutions, including industry-specific AI offerings. It helps clients modernize applications, data platforms, and business processes using AI and automation.</p>
+              <p>Infosys also has a strong products and platforms angle: e.g., its core banking product Finacle now includes AI features, and Infosys Topaz is an AI-first offering that combines services, platforms, and solutions. Infosys is a key partner to enterprises adopting cloud and AI, and it works closely with major cloud providers (Azure, AWS, GCP) with a strong understanding of cloud-native AI services.</p>
+            </div>
+          </details>
+          <details id="infosys-equinix-pitch-angle-empowering-infosys-ai-first-enterprise-journey">
+            <summary>Equinix Pitch Angle – Empowering Infosys’ AI-First Enterprise Journey</summary>
+            <div>
+              <p>Equinix Pitch Angle – Empowering Infosys’ AI-First Enterprise Journey: Equinix can support Infosys by providing the distributed, neutral infrastructure that underpins its AI-first solutions. We help Infosys design and run architectures that keep data secure, meet compliance requirements, and perform at scale across markets, while connecting seamlessly to cloud AI services.</p>
+              <p>Architectural Foundation for AI-First: Infosys often needs to revamp clients’ data and IT architectures to support AI. Equinix can be positioned as the foundation where data platforms, analytics, AI services, and enterprise systems meet. We provide the physical and interconnection infrastructure on which Infosys can deploy its AI assets.</p>
+              <p>Scaling Across Global Operations: Infosys’s clients are often global enterprises (e.g. large banks, manufacturers, retailers). Equinix’s global footprint helps Infosys deploy AI and data components in strategic locations close to client operations, ensuring performance and consistency. Infosys can avoid building its own infrastructure in each region and rely on Equinix’s ready capacity.</p>
+              <p>Data Sovereignty &amp; Client Trust: Infosys often deals with clients (especially in BFSI and government) that require strict data residency and security. Equinix’s in-country data centers and private connectivity options allow Infosys to design architectures where sensitive data remains local while connecting to cloud AI services. This aligns with Infosys’s responsible AI principle – ensuring privacy and compliance.</p>
+              <p>Faster Innovation via Ecosystem: Infosys often integrates third-party AI tools and open-source frameworks into its solutions. Equinix’s ecosystem of cloud providers, AI vendors, and network operators enables Infosys to plug in best-of-breed components via private interconnection. Equinix could be a playground for those investments to be tested and deployed in production.</p>
+            </div>
+          </details>
+          <details id="infosys-joint-high-impact-ai-use-cases">
+            <summary>Joint High-Impact AI Use Cases</summary>
+            <div>
+              <p>Joint High-Impact AI Use Cases: Potential areas to pursue with Infosys include:</p>
+              <p>AI-Powered Core Banking Modernization: Infosys’s Finacle is widely used in banking. Equinix can host regional components that connect Finacle, client channels, and cloud AI services. Infosys can then deploy AI features such as credit scoring, personalized offers, and fraud detection in a distributed architecture, with data staying in-country for compliance. Equinix’s presence near financial hubs supports low-latency operations.</p>
+              <p>AI-Driven Supply Chain and Manufacturing: Infosys helps manufacturers optimize supply chains and operations using AI. Equinix’s edge and regional hubs can host analytics and AI workloads that process data from factories, logistics providers, and suppliers in near real time. Infosys’s models can operate closer to data sources, improving responsiveness and resilience.</p>
+              <p>Customer Experience and Personalization: Infosys often builds digital experience platforms for retailers, airlines, and other consumer-facing enterprises. Equinix can host AI inference nodes near major user populations, improving responsiveness of chatbots, recommendation engines, and personalization engines.</p>
+              <p>Operations and AIOps: Infosys provides managed services and AIOps capabilities. Equinix can support these services by hosting telemetry aggregation points and AI inference engines that monitor and optimize client environments globally.</p>
+              <p>Key Equinix Talking Points for Infosys: In engaging Infosys, emphasize:</p>
+            </div>
+          </details>
+          <details id="infosys-key-equinix-talking-points-for-infosys">
+            <summary>Key Equinix Talking Points for Infosys</summary>
+            <div>
+              <p>Key Equinix Talking Points for Infosys: In engaging Infosys, emphasize:</p>
+              <p>Architectural Foundation: Equinix provides the infrastructure and interconnection foundation that makes Infosys’s AI-first architectures viable in complex, global environments.</p>
+              <p>Compliance and Trust: Our in-country presence and private connectivity capabilities help Infosys build compliant AI solutions for regulated clients, supporting privacy, security, and sovereignty.</p>
+              <p>Performance and User Experience: By placing AI components closer to users and systems, Equinix helps Infosys meet performance expectations for real-time analytics and customer-facing AI applications.</p>
+              <p>Innovation and Ecosystem: Equinix enables Infosys to integrate multiple AI vendors, cloud services, and data providers quickly and securely, fuelling experimentation and rapid scaling.</p>
+              <p>Global Delivery Synergy: Infosys is known for global delivery and managed services. Equinix’s global, standardized platform makes it easier for Infosys to manage and support clients consistently across regions, reducing complexity and improving consistency and reliability (less firefighting of infra issues).</p>
+              <p>Client Confidence via Neutrality: Point out that using Equinix can reassure clients that the infrastructure layer is neutral and not tied to any one cloud or vendor. This can be important when clients are concerned about lock-in or need multi-cloud flexibility. For example, “We’ll keep your data in a neutral Equinix environment, which connects to cloud AI services without exposing your data to the public internet.”</p>
+            </div>
+          </details>
+          <details id="infosys-strategic-questions-for-infosys">
+            <summary>Strategic Questions for Infosys</summary>
+            <div>
+              <p>Strategic Questions for Infosys: In exploring joint opportunities, ask:</p>
+              <p>“Infosys Topaz includes thousands of AI assets and models. How do you take these from PoC to industrialized deployments across different countries and regulatory regimes? We can help identify where a distributed infrastructure might remove those roadblocks.”</p>
+              <p>“When taking an AI use case from pilot to enterprise-wide rollout, where do infrastructure or network constraints slow you down? Would having a repeatable pattern with Equinix help accelerate delivery?”</p>
+              <p>“Do you have cases where a client wants AI on-premises due to regulatory or risk concerns, but still wants to leverage cloud AI services? Equinix can host hybrid patterns that accommodate both needs.”</p>
+              <p>“Infosys emphasizes responsible AI. In practice, how do you operationalize that in architectures? Would having a neutral, secure infrastructure layer supporting data governance and AI zones help?”</p>
+              <p>“Looking ahead, where do you see the next big opportunity for AI with your clients – BFSI, manufacturing, retail? We can co-design a reference architecture and joint solution for that domain.”</p>
+            </div>
+          </details>
+        </section>
+        <section id="conclusion">
+          <h3 class="section-kicker">Wrap-Up</h3>
+          <h2 class="section-title">Conclusion</h2>
+          <p>Each GSI – TCS, HCLTech, Wipro, and Infosys – is driving AI-led transformation across industries such as BFSI, healthcare, manufacturing, and more. Equinix Distributed AI provides the global, neutral infrastructure layer that helps them deliver on those ambitions: proximity to data and users, compliance with regional regulations, ecosystem access (multi-cloud, AI services), and rapid, scalable deployment in new markets. By combining Equinix’s strengths with each GSI’s domain expertise and AI platforms, we can jointly deliver high-value AI solutions to enterprise customers.</p>
+          <p>For Equinix internal teams, the key is to align our strengths with each GSI’s strategy – positioning Equinix as the preferred infrastructure partner that underpins their AI-first, multi-cloud, and digital transformation journeys. This means tailoring our narrative to each GSI’s portfolio and go-to-market approach, highlighting how Distributed AI enables them to build, deploy, and scale solutions that meet clients’ performance, compliance, and innovation needs.</p>
+          <p>Equinix’s value proposition of “global reach, local compliance, and neutral interconnection” becomes even more powerful in the AI era, where data, compute, and ecosystems must come together securely and at scale. By partnering closely with TCS, HCLTech, Wipro, and Infosys, Equinix can help shape the next generation of AI-powered enterprises – and in doing so, drive mutual revenue and innovation for both Equinix and our GSI partners.</p>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script>
+    const buttons = document.querySelectorAll('.gsi-filter-btn');
+    const gsiSections = document.querySelectorAll('.gsi-section');
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-gsi');
+
+        buttons.forEach(b => b.setAttribute('data-active', 'false'));
+        btn.setAttribute('data-active', 'true');
+
+        if (target === 'all') {
+          gsiSections.forEach(sec => sec.style.display = '');
+        } else {
+          gsiSections.forEach(sec => {
+            sec.style.display = (sec.getAttribute('data-gsi') === target) ? '' : 'none';
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

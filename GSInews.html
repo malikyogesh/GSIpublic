@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Indian IT AI & Deals Monitor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #050712;
+      --bg-elevated: #0d1020;
+      --bg-card: #111427;
+      --bg-chip: #1b1f37;
+      --accent: #4f46e5;
+      --accent-soft: rgba(79, 70, 229, 0.18);
+      --accent-strong: rgba(79, 70, 229, 0.35);
+      --accent-2: #22c55e;
+      --text: #e5e7eb;
+      --text-soft: #9ca3af;
+      --border-subtle: rgba(148, 163, 184, 0.35);
+      --danger: #f97373;
+      --radius-lg: 18px;
+      --radius-pill: 999px;
+      --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.55);
+      --transition-fast: 0.18s ease-out;
+      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: var(--font-main);
+      background: radial-gradient(circle at top, #111827 0, #020617 45%, #000 100%);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 24px 12px;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 1200px;
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.96));
+      border-radius: 28px;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      box-shadow: var(--shadow-soft);
+      padding: 22px 22px 26px;
+      backdrop-filter: blur(22px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle glow elements */
+    .glow {
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(45px);
+      opacity: 0.55;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow.glow-1 {
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle, var(--accent-soft), transparent 65%);
+      top: -80px;
+      right: -60px;
+    }
+    .glow.glow-2 {
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(34, 197, 94, 0.22), transparent 70%);
+      bottom: -70px;
+      left: -70px;
+    }
+
+    .content-layer {
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+
+    .title-block h1 {
+      font-size: 1.4rem;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-pill {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text-soft);
+      background: radial-gradient(circle, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.3));
+    }
+
+    .title-block p {
+      color: var(--text-soft);
+      font-size: 0.85rem;
+      margin-top: 4px;
+      max-width: 520px;
+    }
+
+    .controls-primary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .btn-primary,
+    .btn-ghost {
+      border-radius: var(--radius-pill);
+      padding: 7px 14px;
+      font-size: 0.78rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background var(--transition-fast),
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast),
+        border-color var(--transition-fast),
+        color var(--transition-fast);
+      background: none;
+      color: var(--text-soft);
+    }
+
+    .btn-primary {
+      background: radial-gradient(circle at top left, var(--accent-strong), var(--accent));
+      color: #e5e7ff;
+      border-color: rgba(129, 140, 248, 0.7);
+      box-shadow: 0 12px 28px rgba(30, 64, 175, 0.7);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 38px rgba(30, 64, 175, 0.9);
+    }
+
+    .btn-ghost {
+      border-color: rgba(148, 163, 184, 0.45);
+      background: radial-gradient(circle, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.4));
+    }
+
+    .btn-ghost:hover {
+      border-color: rgba(148, 163, 184, 0.8);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary span.icon,
+    .btn-ghost span.icon {
+      font-size: 0.9rem;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.4fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 960px) {
+      main {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .panel {
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.98));
+      border-radius: 22px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      padding: 14px 14px 16px;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.7);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 8px;
+    }
+
+    .panel-header h2 {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-soft);
+    }
+
+    .panel-header small {
+      font-size: 0.75rem;
+      color: var(--text-soft);
+    }
+
+    /* Filters */
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.2fr);
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 720px) {
+      .filters {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .company-filter {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      border-radius: var(--radius-pill);
+      padding: 5px 10px;
+      font-size: 0.78rem;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-chip);
+      color: var(--text-soft);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background var(--transition-fast),
+        border-color var(--transition-fast),
+        transform var(--transition-fast),
+        color var(--transition-fast);
+    }
+
+    .chip span.dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      display: inline-block;
+    }
+
+    .chip[data-company="HCLTech"] span.dot {
+      background: #22c55e;
+    }
+    .chip[data-company="TCS"] span.dot {
+      background: #f97316;
+    }
+    .chip[data-company="Wipro"] span.dot {
+      background: #eab308;
+    }
+    .chip[data-company="Infosys"] span.dot {
+      background: #0ea5e9;
+    }
+
+    .chip.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: #e5e7ff;
+      transform: translateY(-1px);
+    }
+
+    .secondary-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .select,
+    .input {
+      position: relative;
+      min-width: 130px;
+    }
+
+    select,
+    input[type="text"] {
+      width: 100%;
+      padding: 7px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text);
+      font-size: 0.8rem;
+      outline: none;
+      appearance: none;
+    }
+
+    select:focus,
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.7);
+    }
+
+    .select::after {
+      content: "▾";
+      position: absolute;
+      right: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.7rem;
+      color: var(--text-soft);
+      pointer-events: none;
+    }
+
+    /* News list */
+    .news-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 430px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .news-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .news-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .news-list::-webkit-scrollbar-thumb {
+      background-color: rgba(55, 65, 81, 0.8);
+      border-radius: 999px;
+    }
+
+    .news-card {
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(15, 23, 42, 0.98));
+      border: 1px solid rgba(75, 85, 99, 0.7);
+      padding: 10px 11px;
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 1.4fr);
+      gap: 6px;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+        border-color var(--transition-fast), background var(--transition-fast);
+    }
+
+    .news-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.9);
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 1));
+    }
+
+    .news-main h3 {
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+
+    .news-main h3 a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .news-main h3 a:hover {
+      text-decoration: underline;
+    }
+
+    .news-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 0.7rem;
+      color: var(--text-soft);
+      margin-bottom: 4px;
+    }
+
+    .tag {
+      border-radius: var(--radius-pill);
+      padding: 2px 7px;
+      background: rgba(31, 41, 55, 0.9);
+      border: 1px solid rgba(75, 85, 99, 0.9);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .tag.deal {
+      border-color: rgba(250, 204, 21, 0.9);
+      color: #facc15;
+    }
+
+    .tag.ai {
+      border-color: rgba(129, 140, 248, 0.9);
+      color: #a5b4fc;
+    }
+
+    .tag.partnership {
+      border-color: rgba(45, 212, 191, 0.9);
+      color: #5eead4;
+    }
+
+    .tag.governance {
+      border-color: rgba(52, 211, 153, 0.9);
+      color: #6ee7b7;
+    }
+
+    .news-desc {
+      font-size: 0.8rem;
+      color: var(--text-soft);
+    }
+
+    .news-side {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 6px;
+      text-align: right;
+      font-size: 0.75rem;
+      color: var(--text-soft);
+    }
+
+    .pill-company {
+      border-radius: var(--radius-pill);
+      padding: 3px 8px;
+      font-size: 0.7rem;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.8);
+    }
+
+    .pill-company.HCLTech {
+      border-color: #22c55e;
+      color: #bbf7d0;
+    }
+
+    .pill-company.TCS {
+      border-color: #f97316;
+      color: #fed7aa;
+    }
+
+    .pill-company.Wipro {
+      border-color: #eab308;
+      color: #fef9c3;
+    }
+
+    .pill-company.Infosys {
+      border-color: #0ea5e9;
+      color: #bae6fd;
+    }
+
+    .pill-date {
+      opacity: 0.85;
+    }
+
+    .pill-impact {
+      border-radius: var(--radius-pill);
+      padding: 3px 8px;
+      background: rgba(22, 163, 74, 0.08);
+      border: 1px solid rgba(34, 197, 94, 0.6);
+      color: #bbf7d0;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 24px 10px 10px;
+      font-size: 0.85rem;
+      color: var(--text-soft);
+    }
+
+    /* Right panel: stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .stat-card {
+      border-radius: 15px;
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.96));
+      border: 1px solid rgba(75, 85, 99, 0.9);
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      align-items: center;
+      font-size: 0.7rem;
+      color: var(--text-soft);
+    }
+
+    .stat-company {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      font-size: 0.75rem;
+    }
+
+    .stat-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+    }
+
+    .stat-dot.HCLTech {
+      background: #22c55e;
+    }
+    .stat-dot.TCS {
+      background: #f97316;
+    }
+    .stat-dot.Wipro {
+      background: #eab308;
+    }
+    .stat-dot.Infosys {
+      background: #0ea5e9;
+    }
+
+    .stat-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .stat-main .value {
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    .stat-main .label {
+      font-size: 0.7rem;
+      color: var(--text-soft);
+      text-align: right;
+    }
+
+    .stat-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 3px;
+    }
+
+    .stat-chip {
+      border-radius: var(--radius-pill);
+      padding: 2px 6px;
+      font-size: 0.65rem;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(75, 85, 99, 0.9);
+      color: var(--text-soft);
+    }
+
+    .stat-chip.highlight {
+      border-color: rgba(129, 140, 248, 0.9);
+      color: #a5b4fc;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+      font-size: 0.7rem;
+      color: var(--text-soft);
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .legend span::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #6b7280;
+    }
+
+    .legend span.dot-deal::before {
+      background: #facc15;
+    }
+    .legend span.dot-ai::before {
+      background: #a5b4fc;
+    }
+    .legend span.dot-partnership::before {
+      background: #5eead4;
+    }
+    .legend span.dot-governance::before {
+      background: #6ee7b7;
+    }
+
+    .meta-footer {
+      font-size: 0.7rem;
+      color: var(--text-soft);
+      border-top: 1px dashed rgba(55, 65, 81, 0.9);
+      padding-top: 8px;
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .meta-footer strong {
+      color: #e5e7ff;
+      font-weight: 500;
+    }
+
+    .meta-footer span.keyword {
+      color: #a5b4fc;
+    }
+
+    .badge-hot {
+      border-radius: var(--radius-pill);
+      padding: 2px 7px;
+      font-size: 0.68rem;
+      border: 1px solid rgba(248, 113, 113, 0.9);
+      color: #fecaca;
+      background: rgba(127, 29, 29, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+    <div class="content-layer">
+      <header>
+        <div class="title-block">
+          <div class="title-pill">Indian IT · AI · Deals Radar</div>
+          <h1>
+            AI & Strategic Deals — HCLTech · TCS · Wipro · Infosys
+          </h1>
+          <p>
+            Track how India’s IT majors are evolving into AI-first, deal-driven
+            transformation partners — across sectors, geographies, and
+            hyperscaler ecosystems.
+          </p>
+        </div>
+        <div class="controls-primary">
+          <button class="btn-ghost" id="btnReset">
+            <span class="icon">↺</span>
+            Reset filters
+          </button>
+          <button class="btn-primary" id="btnHighlightAI">
+            <span class="icon">✨</span>
+            Emphasize AI-heavy items
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <!-- Left: News stream -->
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Live Intelligence Feed</h2>
+            <small id="feedSummary">Showing latest items</small>
+          </div>
+
+          <div class="filters">
+            <div class="company-filter" id="companyFilter">
+              <div class="chip active" data-company="HCLTech">
+                <span class="dot"></span> HCLTech
+              </div>
+              <div class="chip active" data-company="TCS">
+                <span class="dot"></span> TCS
+              </div>
+              <div class="chip active" data-company="Wipro">
+                <span class="dot"></span> Wipro
+              </div>
+              <div class="chip active" data-company="Infosys">
+                <span class="dot"></span> Infosys
+              </div>
+            </div>
+            <div class="secondary-filters">
+              <div class="select">
+                <select id="categoryFilter">
+                  <option value="all">All categories</option>
+                  <option value="Deal">Deals / Wins</option>
+                  <option value="AI/Cloud">AI & Cloud</option>
+                  <option value="Partnership">Partnerships</option>
+                  <option value="Governance">AI Governance</option>
+                </select>
+              </div>
+              <div class="input">
+                <input
+                  type="text"
+                  id="searchInput"
+                  placeholder="Search (e.g. NHS, AWS, GCC, GenAI)…"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="news-list" id="newsList"></div>
+          <div class="empty-state" id="emptyState" style="display: none;">
+            No items match your filters. Try widening the category or turning
+            more companies back on.
+          </div>
+        </section>
+
+        <!-- Right: Company stats / comparison -->
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Competitive Pulse</h2>
+            <small>Today’s lens on who is leading where</small>
+          </div>
+
+          <div class="legend">
+            <span class="dot-deal">Deals & large wins</span>
+            <span class="dot-ai">AI / Cloud plays</span>
+            <span class="dot-partnership">Strategic partnerships</span>
+            <span class="dot-governance">AI governance & standards</span>
+          </div>
+
+          <div class="stats-grid" id="statsGrid"></div>
+
+          <div class="meta-footer">
+            <span>
+              <strong>Tip:</strong> Use this page as a quick
+              <span class="keyword">signal board</span> before calls, decks,
+              or strategy docs.
+            </span>
+            <span>
+              <span class="badge-hot">Macro</span>
+              The real edge isn’t one deal — it’s who shapes the default AI
+              operating model for entire industries.
+            </span>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // --- Sample data: replace / extend this with live data if needed ---
+    const newsItems = [
+      {
+        company: "HCLTech",
+        date: "2025-11-25",
+        title:
+          "HCLTech and AWS sign multi-year strategic collaboration for AI-led FSI modernization",
+        category: "Deal",
+        subCategory: "AI/Cloud",
+        impact: "FSI Modernization",
+        description:
+          "HCLTech expands its AWS SCA to modernize banking, wealth, and insurance clients with AI-driven customer experiences and regulatory-compliant cloud architectures.",
+        link: "#",
+        tags: ["AWS", "Financial Services", "Modernization"],
+      },
+      {
+        company: "HCLTech",
+        date: "2025-11-28",
+        title: "HCLTech and SAP partner on 'Physical AI' for industrial operations",
+        category: "Partnership",
+        subCategory: "AI/Cloud",
+        impact: "Industrial AI",
+        description:
+          "New SAP collaboration focuses on embedding AI into real-world operations — from shop floors to supply chains — under a 'Physical AI' blueprint.",
+        link: "#",
+        tags: ["SAP", "Physical AI", "Manufacturing"],
+      },
+      {
+        company: "HCLTech",
+        date: "2025-12-01",
+        title:
+          "HCLTech joins Singapore's AI Verify Foundation to shape AI testing and governance",
+        category: "Governance",
+        subCategory: "AI/Cloud",
+        impact: "Responsible AI",
+        description:
+          "By joining AI Verify Foundation, HCLTech aligns its Responsible AI framework with global standards around testing, transparency, and risk management.",
+        link: "#",
+        tags: ["AI Governance", "Singapore", "Responsible AI"],
+      },
+      {
+        company: "TCS",
+        date: "2025-11-20",
+        title:
+          "TCS wins 5-year AI & cloud transformation deal with SAP for enterprise operations",
+        category: "Deal",
+        subCategory: "AI/Cloud",
+        impact: "Enterprise AI at Scale",
+        description:
+          "TCS will modernize SAP's internal enterprise cloud and build AI-led operations on S/4HANA Cloud, cementing its role as a strategic AI partner.",
+        link: "#",
+        tags: ["SAP", "Enterprise Cloud", "GenAI Ops"],
+      },
+      {
+        company: "TCS",
+        date: "2025-11-18",
+        title:
+          "NHS Supply Chain extends multi-year partnership with TCS for AI-driven healthcare logistics",
+        category: "Deal",
+        subCategory: "AI/Cloud",
+        impact: "Healthcare Supply Chain",
+        description:
+          "UK's NHS Supply Chain taps TCS to migrate workloads to cloud and use AI/analytics to optimize medical supply flows and resilience.",
+        link: "#",
+        tags: ["NHS", "Healthcare", "UK Public Sector"],
+      },
+      {
+        company: "TCS",
+        date: "2025-11-15",
+        title:
+          "TCS and Box launch intelligent content management solution for large enterprises",
+        category: "Partnership",
+        subCategory: "AI/Cloud",
+        impact: "Knowledge AI",
+        description:
+          "Joint solution uses AI to classify, summarize, and route content, turning unstructured documents into actionable knowledge.",
+        link: "#",
+        tags: ["Box", "Content AI", "Knowledge Management"],
+      },
+      {
+        company: "Wipro",
+        date: "2025-12-01",
+        title:
+          "Wipro signs multi-year IT transformation deal with Dutch telco Odido using WEGA and WINGS AI",
+        category: "Deal",
+        subCategory: "AI/Cloud",
+        impact: "Telco CX & IT Modernization",
+        description:
+          "Over $30M multi-year engagement to modernize Odido's IT stack and customer experience with Wipro's AI-native delivery platforms.",
+        link: "#",
+        tags: ["Odido", "Telecom", "Europe"],
+      },
+      {
+        company: "Wipro",
+        date: "2025-11-10",
+        title:
+          "Wipro and Google Cloud roll out 200+ agentic AI solutions across industries",
+        category: "Partnership",
+        subCategory: "AI/Cloud",
+        impact: "Agentic AI",
+        description:
+          "New library of production-ready AI agents targets healthcare, banking, insurance, retail, manufacturing, and IT operations.",
+        link: "#",
+        tags: ["Google Cloud", "Agentic AI", "Cross-Industry"],
+      },
+      {
+        company: "Infosys",
+        date: "2025-11-03",
+        title: "Infosys launches Topaz Fabric — composable AI agent fabric for enterprises",
+        category: "AI/Cloud",
+        subCategory: "AI/Cloud",
+        impact: "AI Platformization",
+        description:
+          "Topaz Fabric brings 50+ AI agents and integrations with major enterprise platforms to accelerate AI adoption at scale.",
+        link: "#",
+        tags: ["Infosys Topaz", "AI Agents", "Enterprise Platforms"],
+      },
+      {
+        company: "Infosys",
+        date: "2025-11-14",
+        title:
+          "Infosys unveils AI-first GCC model powered by Topaz, Agentic Foundry and EdgeVerve AI Next",
+        category: "AI/Cloud",
+        subCategory: "AI/Cloud",
+        impact: "GCC Reinvention",
+        description:
+          "New model turns Global Capability Centres into AI-native innovation hubs, building on 100+ existing GCC relationships.",
+        link: "#",
+        tags: ["GCC", "Agentic Foundry", "EdgeVerve"],
+      },
+      {
+        company: "Infosys",
+        date: "2025-11-22",
+        title:
+          "Infosys builds AI agents for energy operations with Microsoft Azure OpenAI and Copilot Studio",
+        category: "Deal",
+        subCategory: "AI/Cloud",
+        impact: "AI for Energy",
+        description:
+          "An energy client uses Infosys-built agents to optimize operations, leveraging Infosys Topaz, Cobalt, and GPT-4-class models on Azure.",
+        link: "#",
+        tags: ["Energy", "Azure OpenAI", "Cobalt"],
+      },
+    ];
+
+    const companyFilterEl = document.getElementById("companyFilter");
+    const newsListEl = document.getElementById("newsList");
+    const emptyStateEl = document.getElementById("emptyState");
+    const feedSummaryEl = document.getElementById("feedSummary");
+    const categoryFilterEl = document.getElementById("categoryFilter");
+    const searchInputEl = document.getElementById("searchInput");
+    const statsGridEl = document.getElementById("statsGrid");
+    const btnReset = document.getElementById("btnReset");
+    const btnHighlightAI = document.getElementById("btnHighlightAI");
+
+    let activeCompanies = new Set(["HCLTech", "TCS", "Wipro", "Infosys"]);
+    let emphasizeAI = false;
+
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString("en-IN", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+      });
+    }
+
+    function getCategoryTagClass(category) {
+      switch (category) {
+        case "Deal":
+          return "deal";
+        case "AI/Cloud":
+          return "ai";
+        case "Partnership":
+          return "partnership";
+        case "Governance":
+          return "governance";
+        default:
+          return "";
+      }
+    }
+
+    function applyFilters() {
+      const category = categoryFilterEl.value;
+      const search = searchInputEl.value.trim().toLowerCase();
+
+      const filtered = newsItems.filter((item) => {
+        if (!activeCompanies.has(item.company)) return false;
+        if (category !== "all" && item.category !== category) return false;
+
+        if (search) {
+          const blob = (
+            item.title +
+            " " +
+            item.description +
+            " " +
+            item.company +
+            " " +
+            (item.tags || []).join(" ")
+          ).toLowerCase();
+          if (!blob.includes(search)) return false;
+        }
+        return true;
+      });
+
+      renderNews(filtered);
+      renderStats(filtered);
+      updateSummary(filtered);
+    }
+
+    function renderNews(items) {
+      newsListEl.innerHTML = "";
+      if (!items.length) {
+        emptyStateEl.style.display = "block";
+        return;
+      }
+      emptyStateEl.style.display = "none";
+
+      const sorted = [...items].sort(
+        (a, b) => new Date(b.date) - new Date(a.date)
+      );
+
+      for (const item of sorted) {
+        const card = document.createElement("article");
+        card.className = "news-card";
+
+        const isAIHeavy =
+          item.category === "AI/Cloud" ||
+          item.subCategory === "AI/Cloud" ||
+          (item.tags || []).some((t) =>
+            t.toLowerCase().includes("ai")
+          );
+
+        if (emphasizeAI && isAIHeavy) {
+          card.style.borderColor = "#a5b4fc";
+          card.style.boxShadow = "0 12px 30px rgba(129, 140, 248, 0.6)";
+        }
+
+        card.innerHTML = `
+          <div class="news-main">
+            <h3><a href="${item.link}" target="_blank" rel="noopener noreferrer">${
+          item.title
+        }</a></h3>
+            <div class="news-meta">
+              <span class="tag ${getCategoryTagClass(item.category)}">${
+          item.category
+        }</span>
+              ${
+                item.subCategory && item.subCategory !== item.category
+                  ? `<span class="tag ${getCategoryTagClass(
+                      item.subCategory
+                    )}">${item.subCategory}</span>`
+                  : ""
+              }
+              ${
+                item.tags && item.tags.length
+                  ? item.tags
+                      .slice(0, 3)
+                      .map(
+                        (t) =>
+                          `<span class="tag">${t
+                            .toString()
+                            .substring(0, 18)}</span>`
+                      )
+                      .join("")
+                  : ""
+              }
+            </div>
+            <p class="news-desc">${item.description}</p>
+          </div>
+          <div class="news-side">
+            <div>
+              <div class="pill-company ${item.company.replace(/\s+/g, "")}">
+                ${item.company}
+              </div>
+            </div>
+            <span class="pill-date">${formatDate(item.date)}</span>
+            ${
+              item.impact
+                ? `<div class="pill-impact">${item.impact}</div>`
+                : ""
+            }
+          </div>
+        `;
+
+        newsListEl.appendChild(card);
+      }
+    }
+
+    function renderStats(items) {
+      const companies = ["HCLTech", "TCS", "Wipro", "Infosys"];
+      const base = { total: 0, deal: 0, ai: 0, partnership: 0, governance: 0 };
+      const stats = {};
+      companies.forEach((c) => (stats[c] = { ...base }));
+
+      for (const item of items) {
+        const st = stats[item.company];
+        if (!st) continue;
+        st.total += 1;
+        if (item.category === "Deal") st.deal += 1;
+        if (item.category === "AI/Cloud") st.ai += 1;
+        if (item.category === "Partnership") st.partnership += 1;
+        if (item.category === "Governance") st.governance += 1;
+      }
+
+      statsGridEl.innerHTML = "";
+
+      companies.forEach((company) => {
+        const st = stats[company];
+        const isActive = activeCompanies.has(company);
+        const opacity = isActive ? 1 : 0.35;
+
+        const card = document.createElement("div");
+        card.className = "stat-card";
+        card.style.opacity = opacity;
+
+        const aiWeight = st.ai + st.deal * 0.5 + st.partnership * 0.3;
+        const positioning =
+          company === "Infosys"
+            ? "AI fabric & GCCs"
+            : company === "TCS"
+            ? "Big-ticket AI deals"
+            : company === "Wipro"
+            ? "Agentic AI & telco CX"
+            : "Responsible AI & FSI";
+
+        card.innerHTML = `
+          <div class="stat-header">
+            <div class="stat-company">
+              <span class="stat-dot ${company.replace(/\s+/g, "")}"></span>
+              ${company}
+            </div>
+            <span>${
+              st.total
+                ? `${st.total} active signals`
+                : "No items under current filters"
+            }</span>
+          </div>
+          <div class="stat-main">
+            <div class="value">${aiWeight.toFixed(1)}</div>
+            <div class="label">${positioning}</div>
+          </div>
+          <div class="stat-tags">
+            <span class="stat-chip ${
+              st.ai ? "highlight" : ""
+            }">AI/Cloud: ${st.ai}</span>
+            <span class="stat-chip">Deals: ${st.deal}</span>
+            <span class="stat-chip">Partnerships: ${st.partnership}</span>
+            <span class="stat-chip">Gov/Standards: ${st.governance}</span>
+          </div>
+        `;
+
+        statsGridEl.appendChild(card);
+      });
+    }
+
+    function updateSummary(items) {
+      const total = newsItems.length;
+      const shown = items.length;
+      const activeCompaniesList = Array.from(activeCompanies);
+      const companiesLabel =
+        activeCompaniesList.length === 4
+          ? "all four companies"
+          : activeCompaniesList.join(" · ");
+
+      const category = categoryFilterEl.value;
+      const categoryLabel =
+        category === "all" ? "all categories" : category + " only";
+
+      feedSummaryEl.textContent = `Showing ${shown}/${total} items for ${companiesLabel} · ${categoryLabel}`;
+    }
+
+    // Event listeners
+    companyFilterEl.addEventListener("click", (e) => {
+      const chip = e.target.closest(".chip");
+      if (!chip) return;
+      const company = chip.dataset.company;
+      if (!company) return;
+
+      if (activeCompanies.has(company)) {
+        if (activeCompanies.size === 1) return; // keep at least one
+        activeCompanies.delete(company);
+        chip.classList.remove("active");
+      } else {
+        activeCompanies.add(company);
+        chip.classList.add("active");
+      }
+      applyFilters();
+    });
+
+    categoryFilterEl.addEventListener("change", applyFilters);
+    searchInputEl.addEventListener("input", () => {
+      // Debounce-lite for small dataset
+      clearTimeout(searchInputEl._t);
+      searchInputEl._t = setTimeout(applyFilters, 120);
+    });
+
+    btnReset.addEventListener("click", () => {
+      activeCompanies = new Set(["HCLTech", "TCS", "Wipro", "Infosys"]);
+      document
+        .querySelectorAll(".chip")
+        .forEach((c) => c.classList.add("active"));
+      categoryFilterEl.value = "all";
+      searchInputEl.value = "";
+      emphasizeAI = false;
+      btnHighlightAI.classList.remove("active");
+      btnHighlightAI.textContent = "Emphasize AI-heavy items";
+      btnHighlightAI.prepend(Object.assign(document.createElement("span"), {className: "icon", textContent: "✨"}));
+      applyFilters();
+    });
+
+    btnHighlightAI.addEventListener("click", () => {
+      emphasizeAI = !emphasizeAI;
+      if (emphasizeAI) {
+        btnHighlightAI.classList.add("active");
+        btnHighlightAI.style.boxShadow = "0 12px 28px rgba(129, 140, 248, 0.8)";
+      } else {
+        btnHighlightAI.classList.remove("active");
+        btnHighlightAI.style.boxShadow = "";
+      }
+      applyFilters();
+    });
+
+    // Initial render
+    applyFilters();
+  </script>
+</body>
+</html>

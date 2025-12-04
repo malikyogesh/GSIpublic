@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cognitive Bandwidth Architect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- React & ReactDOM from CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel so we can write JSX directly in this file -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #0b1120;
+        color: #111827;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useMemo } = React;
+
+      const MENTAL_MODES = [
+        "Deep Research",
+        "Creative Drafting",
+        "Execution/Admin",
+        "Exploration/Strategy",
+      ];
+
+      const STATUS_OPTIONS = ["NOW", "NEXT", "LATER"];
+
+      const DEFAULT_WEEK_TEMPLATE = {
+        Monday: {
+          morning: "Creative Drafting",
+          afternoon: "Execution/Admin",
+        },
+        Tuesday: {
+          morning: "Deep Research",
+          afternoon: "Execution/Admin",
+        },
+        Wednesday: {
+          morning: "Exploration/Strategy",
+          afternoon: "Execution/Admin",
+        },
+        Thursday: {
+          morning: "Deep Research",
+          afternoon: "Creative Drafting",
+        },
+        Friday: {
+          morning: "Execution/Admin",
+          afternoon: "Exploration/Strategy",
+        },
+      };
+
+      let projectIdCounter = 1;
+
+      const thStyle = {
+        textAlign: "left",
+        padding: "8px",
+        borderRight: "1px solid #e5e7eb",
+        fontWeight: 600,
+      };
+
+      const tdStyle = {
+        padding: "6px 8px",
+        borderRight: "1px solid #f3f4f6",
+        verticalAlign: "top",
+      };
+
+      const inputCellStyle = {
+        width: "100%",
+        padding: "4px 6px",
+        borderRadius: "4px",
+        border: "1px solid #d1d5db",
+        fontSize: "13px",
+        boxSizing: "border-box",
+      };
+
+      function ColumnCard({ title, description, projects }) {
+        return (
+          <div
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              padding: "10px",
+              background: "#F9FAFB",
+              minHeight: "120px",
+            }}
+          >
+            <h3 style={{ fontSize: "16px", marginBottom: "4px" }}>{title}</h3>
+            <p
+              style={{ fontSize: "12px", color: "#6B7280", marginBottom: "8px" }}
+            >
+              {description}
+            </p>
+            {projects.length === 0 ? (
+              <p style={{ fontSize: "12px", color: "#9CA3AF" }}>Empty.</p>
+            ) : (
+              <ul
+                style={{ paddingLeft: "18px", margin: 0, fontSize: "13px" }}
+              >
+                {projects.map((p) => (
+                  <li key={p.id}>
+                    {p.name}
+                    {p.mode ? ` — ${p.mode}` : ""}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+      }
+
+      function App() {
+        const [projectInput, setProjectInput] = useState("");
+        const [bulkInput, setBulkInput] = useState("");
+        const [projects, setProjects] = useState([]);
+        const [weekTemplate, setWeekTemplate] =
+          useState(DEFAULT_WEEK_TEMPLATE);
+
+        const countByStatus = useMemo(() => {
+          const counts = { NOW: 0, NEXT: 0, LATER: 0 };
+          projects.forEach((p) => {
+            if (STATUS_OPTIONS.includes(p.status)) counts[p.status] += 1;
+          });
+          return counts;
+        }, [projects]);
+
+        const addProject = (name) => {
+          const trimmed = name.trim();
+          if (!trimmed) return;
+          setProjects((prev) => [
+            ...prev,
+            {
+              id: projectIdCounter++,
+              name: trimmed,
+              mode: "",
+              atomicAction: "",
+              status: "LATER",
+              decision: "undecided",
+            },
+          ]);
+        };
+
+        const handleAddSingle = () => {
+          addProject(projectInput);
+          setProjectInput("");
+        };
+
+        const handleBulkAdd = () => {
+          const lines = bulkInput
+            .split("\n")
+            .map((l) => l.trim())
+            .filter(Boolean);
+          lines.forEach((line) => addProject(line));
+          setBulkInput("");
+        };
+
+        const updateProject = (id, field, value) => {
+          setProjects((prev) =>
+            prev.map((p) => (p.id === id ? { ...p, [field]: value } : p))
+          );
+        };
+
+        const handleStatusChange = (id, newStatus) => {
+          setProjects((prev) => {
+            const counts = { NOW: 0, NEXT: 0, LATER: 0 };
+            prev.forEach((p) => {
+              counts[p.status] = (counts[p.status] || 0) + 1;
+            });
+
+            const updated = prev.map((p) => {
+              if (p.id !== id) return p;
+              const currentStatus = p.status;
+
+              if (currentStatus === newStatus) return p;
+
+              if (newStatus === "NOW" && counts.NOW >= 3) {
+                alert("NOW is capped at 3. Demote something else first.");
+                return p;
+              }
+              if (newStatus === "NEXT" && counts.NEXT >= 5) {
+                alert("NEXT is capped at 5. Demote something else first.");
+                return p;
+              }
+              return { ...p, status: newStatus };
+            });
+
+            return updated;
+          });
+        };
+
+        const autoFillNowNextLater = () => {
+          const ready = [...projects].sort((a, b) => {
+            const aScore = (a.atomicAction ? 1 : 0) + (a.mode ? 1 : 0);
+            const bScore = (b.atomicAction ? 1 : 0) + (b.mode ? 1 : 0);
+            return bScore - aScore;
+          });
+
+          let nowCount = 0;
+          let nextCount = 0;
+
+          const updated = ready.map((p) => {
+            let status = "LATER";
+            if (nowCount < 3 && (p.atomicAction || p.mode)) {
+              status = "NOW";
+              nowCount++;
+            } else if (nextCount < 5 && (p.atomicAction || p.mode)) {
+              status = "NEXT";
+              nextCount++;
+            }
+            return { ...p, status };
+          });
+
+          setProjects(updated);
+        };
+
+        const suggestedKillOrHold = useMemo(() => {
+          const kill = [];
+          const hold = [];
+          projects.forEach((p) => {
+            const noAction = !p.atomicAction.trim();
+            const noMode = !p.mode;
+            const isPermaLater = p.status === "LATER";
+
+            if (noAction && noMode) {
+              kill.push(p);
+            } else if (isPermaLater || noAction) {
+              hold.push(p);
+            }
+          });
+          return { kill, hold };
+        }, [projects]);
+
+        const handleDecisionChange = (id, decision) => {
+          updateProject(id, "decision", decision);
+        };
+
+        const updateWeekTemplate = (day, timeOfDay, newMode) => {
+          setWeekTemplate((prev) => ({
+            ...prev,
+            [day]: {
+              ...prev[day],
+              [timeOfDay]: newMode,
+            },
+          }));
+        };
+
+        const dailyRitual = {
+          morning:
+            "Pick ONE mental mode for your first deep block and choose 1–2 NOW projects that match it.",
+          reset:
+            "3 deep breaths, close all tabs, 2-minute note on what just happened and what’s next.",
+          evening:
+            "List what moved, what’s stuck, and the top mode + project you’ll start with tomorrow.",
+        };
+
+        return (
+          <div
+            style={{
+              fontFamily:
+                "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+              padding: "24px",
+              maxWidth: "1100px",
+              margin: "0 auto",
+              lineHeight: 1.5,
+              background: "#F9FAFB",
+              minHeight: "100vh",
+            }}
+          >
+            <h1
+              style={{
+                fontSize: "28px",
+                fontWeight: 700,
+                marginBottom: "8px",
+              }}
+            >
+              Cognitive Bandwidth Architect
+            </h1>
+            <p style={{ marginBottom: "20px", color: "#4B5563" }}>
+              Capture everything, assign mental modes, define atomic actions,
+              and brutally prioritize. This is your anti-chaos console.
+            </p>
+
+            {/* 1. PROJECT CAPTURE */}
+            <section
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: "8px",
+                padding: "16px",
+                marginBottom: "20px",
+                background: "white",
+              }}
+            >
+              <h2 style={{ fontSize: "20px", marginBottom: "8px" }}>
+                1. Dump All Projects from Your Head
+              </h2>
+              <p style={{ marginBottom: "12px", color: "#6B7280" }}>
+                If it lives in your head and consumes energy, it belongs here —
+                even “maybe” ideas.
+              </p>
+
+              <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+                <input
+                  type="text"
+                  placeholder="Add a single project..."
+                  value={projectInput}
+                  onChange={(e) => setProjectInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleAddSingle();
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "8px",
+                    borderRadius: "4px",
+                    border: "1px solid #d1d5db",
+                  }}
+                />
+                <button
+                  onClick={handleAddSingle}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "4px",
+                    border: "none",
+                    cursor: "pointer",
+                    background: "#111827",
+                    color: "white",
+                    fontWeight: 600,
+                  }}
+                >
+                  Add
+                </button>
+              </div>
+
+              <label style={{ fontSize: "14px", color: "#6B7280" }}>
+                Bulk add (one project per line):
+              </label>
+              <textarea
+                placeholder="Write all projects here, one per line..."
+                value={bulkInput}
+                onChange={(e) => setBulkInput(e.target.value)}
+                rows={4}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  marginTop: "4px",
+                  marginBottom: "8px",
+                  borderRadius: "4px",
+                  border: "1px solid #d1d5db",
+                  resize: "vertical",
+                }}
+              />
+              <button
+                onClick={handleBulkAdd}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: "4px",
+                  border: "none",
+                  cursor: "pointer",
+                  background: "#4B5563",
+                  color: "white",
+                  fontSize: "13px",
+                }}
+              >
+                Add Bulk Projects
+              </button>
+            </section>
+
+            {/* 2 & 3. PROJECT TABLE */}
+            <section
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: "8px",
+                padding: "16px",
+                marginBottom: "20px",
+                background: "white",
+              }}
+            >
+              <h2 style={{ fontSize: "20px", marginBottom: "8px" }}>
+                2–3. Assign Mental Mode & Next Atomic Action
+              </h2>
+              <p style={{ marginBottom: "12px", color: "#6B7280" }}>
+                For each project: pick a dominant mode and define the next
+                action you can complete in under 30 minutes. No vague verbs.
+              </p>
+
+              {projects.length === 0 ? (
+                <p style={{ color: "#9CA3AF" }}>
+                  No projects yet. Your brain is not allowed to be the project
+                  tracker anymore — start dumping.
+                </p>
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table
+                    style={{
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      fontSize: "14px",
+                    }}
+                  >
+                    <thead>
+                      <tr
+                        style={{
+                          background: "#F3F4F6",
+                          borderBottom: "1px solid #e5e7eb",
+                        }}
+                      >
+                        <th style={thStyle}>Project</th>
+                        <th style={thStyle}>Mental Mode</th>
+                        <th style={thStyle}>Next Atomic Action (&lt; 30 min)</th>
+                        <th style={thStyle}>Status</th>
+                        <th style={thStyle}>Decision</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {projects.map((p) => (
+                        <tr
+                          key={p.id}
+                          style={{ borderBottom: "1px solid #f3f4f6" }}
+                        >
+                          <td style={tdStyle}>
+                            <input
+                              type="text"
+                              value={p.name}
+                              onChange={(e) =>
+                                updateProject(p.id, "name", e.target.value)
+                              }
+                              style={inputCellStyle}
+                            />
+                          </td>
+                          <td style={tdStyle}>
+                            <select
+                              value={p.mode}
+                              onChange={(e) =>
+                                updateProject(p.id, "mode", e.target.value)
+                              }
+                              style={inputCellStyle}
+                            >
+                              <option value="">Select mode</option>
+                              {MENTAL_MODES.map((m) => (
+                                <option key={m} value={m}>
+                                  {m}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td style={tdStyle}>
+                            <input
+                              type="text"
+                              placeholder="E.g., draft outline for section 1"
+                              value={p.atomicAction}
+                              onChange={(e) =>
+                                updateProject(
+                                  p.id,
+                                  "atomicAction",
+                                  e.target.value
+                                )
+                              }
+                              style={inputCellStyle}
+                            />
+                          </td>
+                          <td style={tdStyle}>
+                            <select
+                              value={p.status}
+                              onChange={(e) =>
+                                handleStatusChange(p.id, e.target.value)
+                              }
+                              style={inputCellStyle}
+                            >
+                              {STATUS_OPTIONS.map((s) => (
+                                <option key={s} value={s}>
+                                  {s}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td style={tdStyle}>
+                            <select
+                              value={p.decision}
+                              onChange={(e) =>
+                                handleDecisionChange(p.id, e.target.value)
+                              }
+                              style={inputCellStyle}
+                            >
+                              <option value="undecided">Undecided</option>
+                              <option value="keep">Keep Active</option>
+                              <option value="hold">Put on Hold</option>
+                              <option value="kill">Kill / Drop</option>
+                            </select>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            {/* 4. NOW–NEXT–LATER DASHBOARD */}
+            <section
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: "8px",
+                padding: "16px",
+                marginBottom: "20px",
+                background: "white",
+              }}
+            >
+              <h2 style={{ fontSize: "20px", marginBottom: "8px" }}>
+                4. NOW–NEXT–LATER Dashboard
+              </h2>
+              <p style={{ marginBottom: "12px", color: "#6B7280" }}>
+                NOW = max 3. NEXT = 3–5. Everything else is LATER. The point is
+                to admit you are finite.
+              </p>
+              <button
+                onClick={autoFillNowNextLater}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: "4px",
+                  border: "none",
+                  cursor: "pointer",
+                  background: "#111827",
+                  color: "white",
+                  fontSize: "13px",
+                  marginBottom: "12px",
+                }}
+              >
+                Auto-distribute (NOW &amp; NEXT first, rest LATER)
+              </button>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: "12px",
+                }}
+              >
+                <ColumnCard
+                  title={`NOW (${countByStatus.NOW}/3)`}
+                  description="Only what you should meaningfully touch this week."
+                  projects={projects.filter((p) => p.status === "NOW")}
+                />
+                <ColumnCard
+                  title={`NEXT (${countByStatus.NEXT}/5)`}
+                  description="In the queue. Not allowed to stress you today."
+                  projects={projects.filter((p) => p.status === "NEXT")}
+                />
+                <ColumnCard
+                  title={`LATER (${countByStatus.LATER})`}
+                  description="Parked. No guilt. Not dead, just not now."
+                  projects={projects.filter((p) => p.status === "LATER")}
+                />
+              </div>
+            </section>
+
+            {/* 5. KILL / HOLD SUGGESTIONS */}
+            <section
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: "8px",
+                padding: "16px",
+                marginBottom: "20px",
+                background: "white",
+              }}
+            >
+              <h2 style={{ fontSize: "20px", marginBottom: "8px" }}>
+                5. Brutal Audit: Kill or Put on Hold
+              </h2>
+              <p style={{ marginBottom: "12px", color: "#6B7280" }}>
+                No mode + no atomic action = not a project, just a fantasy. Kill
+                it or deliberately park it.
+              </p>
+
+              <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: "220px" }}>
+                  <h3
+                    style={{
+                      fontSize: "16px",
+                      marginBottom: "6px",
+                      color: "#B91C1C",
+                    }}
+                  >
+                    Suggested to Kill
+                  </h3>
+                  {suggestedKillOrHold.kill.length === 0 ? (
+                    <p style={{ color: "#9CA3AF", fontSize: "14px" }}>
+                      Nothing obviously dead yet. Don’t get sentimental.
+                    </p>
+                  ) : (
+                    <ul
+                      style={{ paddingLeft: "18px", fontSize: "14px" }}
+                    >
+                      {suggestedKillOrHold.kill.map((p) => (
+                        <li key={p.id}>{p.name}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div style={{ flex: 1, minWidth: "220px" }}>
+                  <h3
+                    style={{
+                      fontSize: "16px",
+                      marginBottom: "6px",
+                      color: "#92400E",
+                    }}
+                  >
+                    Suggested to Put on Hold
+                  </h3>
+                  {suggestedKillOrHold.hold.length === 0 ? (
+                    <p style={{ color: "#9CA3AF", fontSize: "14px" }}>
+                      No obvious hold candidates yet. Keep this list short on
+                      purpose.
+                    </p>
+                  ) : (
+                    <ul
+                      style={{ paddingLeft: "18px", fontSize: "14px" }}
+                    >
+                      {suggestedKillOrHold.hold.map((p) => (
+                        <li key={p.id}>{p.name}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* 6. WEEKLY STRUCTURE */}
+            <section
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: "8px",
+                padding: "16px",
+                marginBottom: "20px",
+                background: "white",
+              }}
+            >
+              <h2 style={{ fontSize: "20px", marginBottom: "8px" }}>
+                6. Weekly Structure by Mental Mode
+              </h2>
+              <p style={{ marginBottom: "12px", color: "#6B7280" }}>
+                You don’t “work on everything every day”. You run specific modes
+                in specific time windows. That’s how you stop thrashing.
+              </p>
+
+              <div style={{ overflowX: "auto" }}>
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    fontSize: "14px",
+                  }}
+                >
+                  <thead>
+                    <tr
+                      style={{
+                        background: "#F3F4F6",
+                        borderBottom: "1px solid #e5e7eb",
+                      }}
+                    >
+                      <th style={thStyle}>Day</th>
+                      <th style={thStyle}>Morning</th>
+                      <th style={thStyle}>Afternoon</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(weekTemplate).map(([day, slots]) => (
+                      <tr
+                        key={day}
+                        style={{ borderBottom: "1px solid #f3f4f6" }}
+                      >
+                        <td style={tdStyle}>{day}</td>
+                        <td style={tdStyle}>
+                          <select
+                            value={slots.morning}
+                            onChange={(e) =>
+                              updateWeekTemplate(day, "morning", e.target.value)
+                            }
+                            style={inputCellStyle}
+                          >
+                            {MENTAL_MODES.map((m) => (
+                              <option key={m} value={m}>
+                                {m}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td style={tdStyle}>
+                          <select
+                            value={slots.afternoon}
+                            onChange={(e) =>
+                              updateWeekTemplate(
+                                day,
+                                "afternoon",
+                                e.target.value
+                              )
+                            }
+                            style={inputCellStyle}
+                          >
+                            {MENTAL_MODES.map((m) => (
+                              <option key={m} value={m}>
+                                {m}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* 7. DAILY RITUAL */}
+            <section
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: "8px",
+                padding: "16px",
+                marginBottom: "20px",
+                background: "white",
+              }}
+            >
+              <h2 style={{ fontSize: "20px", marginBottom: "8px" }}>
+                7. 3-Line Daily Ritual
+              </h2>
+              <p style={{ marginBottom: "12px", color: "#6B7280" }}>
+                This is your daily control loop. Run it even on “good days”
+                — that’s how you stop chaos before it starts.
+              </p>
+              <ul style={{ paddingLeft: "18px", fontSize: "14px" }}>
+                <li>
+                  <strong>Morning Mode Selection:</strong> {dailyRitual.morning}
+                </li>
+                <li>
+                  <strong>Reset Ritual between blocks:</strong> {dailyRitual.reset}
+                </li>
+                <li>
+                  <strong>End-of-Day State Capture:</strong> {dailyRitual.evening}
+                </li>
+              </ul>
+            </section>
+
+            <p
+              style={{
+                fontSize: "13px",
+                color: "#6B7280",
+                marginTop: "8px",
+                marginBottom: "0",
+              }}
+            >
+              The question isn’t “Can you handle everything?” — it’s “What are
+              you willing to actively drop so the important things can
+              compound?”
+            </p>
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
