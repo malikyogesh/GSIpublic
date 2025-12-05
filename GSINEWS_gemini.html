@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian IT Sector Monitor | Dec 2025</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #3498db;
+            --light: #ecf0f1;
+            --success: #27ae60;
+            --warning: #f1c40f;
+            --danger: #e74c3c;
+            --text: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        header h1 { margin: 0; font-size: 2.5rem; }
+        header p { opacity: 0.8; margin-top: 0.5rem; }
+
+        /* Navigation */
+        nav {
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--secondary);
+            font-weight: 600;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        nav button:hover { background-color: #f8f9fa; }
+        nav button.active { border-bottom-color: var(--accent); color: var(--accent); }
+
+        /* Content Container */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            min-height: 60vh;
+        }
+
+        .tab-content { display: none; animation: fadeIn 0.5s; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Cards & Grids */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+            border-top: 4px solid var(--accent);
+        }
+
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        
+        .card h3 { margin-top: 0; color: var(--primary); }
+        .card .badge { 
+            display: inline-block; 
+            padding: 0.25rem 0.5rem; 
+            border-radius: 4px; 
+            font-size: 0.8rem; 
+            font-weight: bold; 
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        /* Specific Company Colors */
+        .hcl { border-color: #5d2f8e; }
+        .tcs { border-color: #e91e63; }
+        .infy { border-color: #007cc3; }
+        .wipro { border-color: #0096d6; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: var(--secondary); color: white; }
+        tr:hover { background-color: #f9f9f9; }
+
+        /* Outlook Section */
+        .outlook-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #777;
+            font-size: 0.9rem;
+            border-top: 1px solid #ddd;
+            margin-top: 3rem;
+        }
+
+        /* Utility Classes */
+        .bullish { background-color: var(--success); }
+        .stable { background-color: var(--warning); color: #444; }
+        .cautious { background-color: var(--danger); }
+        .tag { background: #eee; padding: 2px 6px; border-radius: 3px; font-size: 0.85rem; margin-right: 5px; }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🇮🇳 Indian IT Market Monitor</h1>
+    <p>Real-time Intelligence: HCLTech • TCS • Wipro • Infosys</p>
+    <p style="font-size: 0.9rem;">Last Updated: Dec 05, 2025</p>
+</header>
+
+<nav>
+    <button class="active" onclick="openTab('summary')">Executive Summary</button>
+    <button onclick="openTab('companies')">Company Deep Dives</button>
+    <button onclick="openTab('comparison')">Competitive Matrix</button>
+    <button onclick="openTab('outlook')">2026 Outlook</button>
+</nav>
+
+<div class="container">
+
+    <div id="summary" class="tab-content active">
+        <div style="background: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem; border-left: 5px solid var(--accent);">
+            <h2>Market Pulse: December 2025</h2>
+            <p style="font-size: 1.1rem; line-height: 1.6;">
+                The sector is undergoing a massive pivot to <strong>"AI-First" operating models</strong>. 
+                <strong>Infosys</strong> leads recent headlines with a £1.2B NHS win and a massive buyback. 
+                <strong>HCLTech</strong> is capitalizing on the "Physical AI" niche with Nvidia. 
+                <strong>TCS</strong> remains the defensive fortress with Sovereign Cloud deals, while 
+                <strong>Wipro</strong> attempts a GenAI-led turnaround.
+            </p>
+        </div>
+
+        <h3>Recent Major Headlines</h3>
+        <div class="grid">
+            <div class="card infy">
+                <span class="badge bullish">Deal Win</span>
+                <h3>Infosys</h3>
+                <p><strong>£1.2 Billion NHS Contract:</strong> Replaces legacy systems for 1.9M UK employees.</p>
+                <p><strong>₹18,000 Cr Buyback:</strong> Massive program launched to boost shareholder value.</p>
+            </div>
+            <div class="card hcl">
+                <span class="badge bullish">Innovation</span>
+                <h3>HCLTech</h3>
+                <p><strong>Physical AI Lab:</strong> New Santa Clara facility with Nvidia for robotics & industrial AI.</p>
+                <p><strong>Samsung SAFE:</strong> Joins semiconductor ecosystem to accelerate chip design.</p>
+            </div>
+            <div class="card tcs">
+                <span class="badge stable">Strategy</span>
+                <h3>TCS</h3>
+                <p><strong>Sovereign Cloud:</strong> African partnership to address data residency & security.</p>
+                <p><strong>Tryg Renewal:</strong> €550M deal to digitalize operations in Scandinavia.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="companies" class="tab-content">
+        <div class="grid">
+            <div class="card infy">
+                <h3>Infosys</h3>
+                <p><strong>Focus:</strong> Enterprise AI Agents & Public Sector</p>
+                <hr>
+                <h4>🚀 Key Wins</h4>
+                <ul>
+                    <li><strong>NHS (UK):</strong> Future Workforce Solution.</li>
+                    <li><strong>HanesBrands:</strong> Digital modernization.</li>
+                </ul>
+                <h4>💡 Tech Update</h4>
+                <p>Launched <strong>"AI-First GCC"</strong> model and Topaz Fabric with 200+ Google Vertex AI agents.</p>
+            </div>
+
+            <div class="card tcs">
+                <h3>Tata Consultancy Services</h3>
+                <p><strong>Focus:</strong> Sovereign Cloud & Global Renewals</p>
+                <hr>
+                <h4>🚀 Key Wins</h4>
+                <ul>
+                    <li><strong>Tryg (Nordics):</strong> €550M digitalization deal.</li>
+                    <li><strong>Aviva (UK):</strong> 15-year life insurance transformation.</li>
+                </ul>
+                <h4>💡 Tech Update</h4>
+                <p>Leader in <strong>Healthcare Data & AI</strong> (Everest Group). Heavy investment in localized Sovereign Cloud.</p>
+            </div>
+
+            <div class="card hcl">
+                <h3>HCLTech</h3>
+                <p><strong>Focus:</strong> Physical AI & Engineering Services</p>
+                <hr>
+                <h4>🚀 Key Wins</h4>
+                <ul>
+                    <li><strong>Swedish Auto Giant:</strong> Multi-year R&D renewal.</li>
+                    <li><strong>AWS Finance:</strong> AI-led transformation partnership.</li>
+                </ul>
+                <h4>💡 Tech Update</h4>
+                <p><strong>Nvidia Partnership:</strong> Focus on "Physical AI" (IT meets OT) and semiconductor ecosystems.</p>
+            </div>
+
+            <div class="card wipro">
+                <h3>Wipro</h3>
+                <p><strong>Focus:</strong> GenAI Turnaround & Retail</p>
+                <hr>
+                <h4>🚀 Key Wins</h4>
+                <ul>
+                    <li><strong>Odido (Netherlands):</strong> AI IT modernization.</li>
+                    <li><strong>HanesBrands:</strong> "GenAI-led IT 2.0".</li>
+                </ul>
+                <h4>💡 Tech Update</h4>
+                <p>Strategic alliance with <strong>IISc</strong> for deep-tech R&D and CrowdStrike for AI-security.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="comparison" class="tab-content">
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Infosys</th>
+                        <th>TCS</th>
+                        <th>HCLTech</th>
+                        <th>Wipro</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Primary AI Focus</strong></td>
+                        <td>Enterprise AI Agents (Topaz)</td>
+                        <td>Sector-Specific & Sovereign AI</td>
+                        <td>Physical AI & Robotics</td>
+                        <td>GenAI Transformation</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Biggest Recent Win</strong></td>
+                        <td>£1.2B NHS (Public Sector)</td>
+                        <td>€550M Tryg (Insurance)</td>
+                        <td>Nvidia Lab (R&D)</td>
+                        <td>Odido (Telecom)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Strategic Play</strong></td>
+                        <td>Massive Share Buyback</td>
+                        <td>Long-term Renewal Fortress</td>
+                        <td>Semiconductor Ecosystem</td>
+                        <td>Academic Alliances (IISc)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cloud Ally</strong></td>
+                        <td>Google Cloud (Vertex AI)</td>
+                        <td>Sovereign Cloud (Self/Partners)</td>
+                        <td>AWS & SAP</td>
+                        <td>Cybersecurity (CrowdStrike)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="outlook" class="tab-content">
+        <div class="outlook-grid">
+            <div>
+                <h2>🔮 The "AI-First" Revenue Realignment</h2>
+                <p>In 2026, the market splits into two high-growth lanes: <strong>Manufacturing AI</strong> and <strong>Sovereign Cloud</strong>.</p>
+                
+                <div class="card hcl" style="margin-bottom: 1rem; border-left: 5px solid #27ae60;">
+                    <h3>HCLTech: The Growth Leader?</h3>
+                    <p><strong>Prediction:</strong> Likely to outperform in growth %.</p>
+                    <p><strong>Why:</strong> Manufacturing AI market hits ~$17.4B. HCL's engineering niche is the perfect fit.</p>
+                </div>
+
+                <div class="card tcs" style="margin-bottom: 1rem; border-left: 5px solid #f1c40f;">
+                    <h3>TCS: The Margin Defender</h3>
+                    <p><strong>Prediction:</strong> Stable growth, high margins.</p>
+                    <p><strong>Why:</strong> Sovereign Cloud demand ($100B market) locks in long-term, secure government contracts.</p>
+                </div>
+
+                <div class="card infy" style="margin-bottom: 1rem; border-left: 5px solid #3498db;">
+                    <h3>Infosys: The H2 2026 Sprinter</h3>
+                    <p><strong>Prediction:</strong> Slow start, fast finish.</p>
+                    <p><strong>Why:</strong> Revenue accelerates as "Agentic AI" moves from pilot to production in late 2026.</p>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3 style="text-align: center; margin-bottom: 1rem;">2026 Sentiment Forecast</h3>
+                <canvas id="sentimentChart"></canvas>
+                <div style="margin-top: 2rem;">
+                    <h4>Key Watchlist Metrics:</h4>
+                    <ul style="font-size: 0.9rem; color: #555;">
+                        <li><strong>HCL:</strong> Manufacturing Vertical Revenue</li>
+                        <li><strong>Infosys:</strong> Large Deal TCV (Total Contract Value)</li>
+                        <li><strong>TCS:</strong> Regional Revenue (Europe/Africa)</li>
+                        <li><strong>Wipro:</strong> Consulting Revenue Growth</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    <p>Generated by AI Assistant • Data as of Dec 05, 2025</p>
+    <button onclick="window.print()" style="padding: 0.5rem 1rem; cursor: pointer;">Download / Print Report</button>
+</footer>
+
+<script>
+    // Tab Switching Logic
+    function openTab(tabName) {
+        var i, tabContent, tabLinks;
+        
+        // Hide all content
+        tabContent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabContent.length; i++) {
+            tabContent[i].style.display = "none";
+            tabContent[i].classList.remove("active");
+        }
+        
+        // Reset buttons
+        tabLinks = document.getElementsByTagName("button");
+        for (i = 0; i < tabLinks.length; i++) {
+            tabLinks[i].classList.remove("active");
+        }
+        
+        // Show target and activate button
+        document.getElementById(tabName).style.display = "block";
+        setTimeout(() => document.getElementById(tabName).classList.add("active"), 10);
+        
+        // Find the button that called this function (simple match)
+        event.currentTarget.classList.add("active");
+    }
+
+    // Chart.js Configuration
+    const ctx = document.getElementById('sentimentChart').getContext('2d');
+    const sentimentChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['HCLTech', 'TCS', 'Infosys', 'Wipro'],
+            datasets: [{
+                label: '2026 Growth Sentiment Score (1-10)',
+                data: [9, 8, 7.5, 5],
+                backgroundColor: [
+                    'rgba(93, 47, 142, 0.7)', // HCL Purple
+                    'rgba(233, 30, 99, 0.7)', // TCS Pink
+                    'rgba(0, 124, 195, 0.7)', // Infy Blue
+                    'rgba(0, 150, 214, 0.7)'  // Wipro Blue
+                ],
+                borderColor: [
+                    'rgba(93, 47, 142, 1)',
+                    'rgba(233, 30, 99, 1)',
+                    'rgba(0, 124, 195, 1)',
+                    'rgba(0, 150, 214, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 10,
+                    title: { display: true, text: 'Analyst Sentiment Score' }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
