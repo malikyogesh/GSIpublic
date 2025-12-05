@@ -3,7 +3,7 @@ import google.generativeai as genai # Or import openai
 from datetime import datetime
 
 # 1. Setup API (Get key from aistudio.google.com)
-genai.configure(api_key=os.environ["AIzaSyA9rHjjTa7Fx8_yrLhk6SB68QTH0dyG_tE"])
+genai.configure(api_key=os.environ[""])
 
 # 2. Define the Prompt
 current_date = datetime.now().strftime("%Y-%m-%d")
