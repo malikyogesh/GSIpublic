@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Offerings of Top Indian GSIs & Equinix Integration</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #060712;
+      --bg-elevated: #101321;
+      --bg-elevated-soft: #16192a;
+      --accent: #ffb14a;
+      --accent-soft: rgba(255, 177, 74, 0.15);
+      --text: #f4f5fb;
+      --muted: #a3a7c2;
+      --border: #23263b;
+      --chip-bg: #191c30;
+      --danger: #ff5c7a;
+      --safe: #4ade80;
+      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      --radius-xl: 20px;
+      --radius-lg: 14px;
+      --radius-pill: 999px;
+      --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.45);
+      --shadow-subtle: 0 10px 24px rgba(0, 0, 0, 0.35);
+      --transition-fast: 0.18s ease-out;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-main);
+      background: radial-gradient(circle at top, #151932 0, #050614 55%, #000 100%);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    @media (max-width: 960px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+      }
+    }
+
+    .sidebar {
+      padding: 18px 18px 20px;
+      background: radial-gradient(circle at top left, #202548 0, #050614 55%);
+      border-right: 1px solid rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(18px);
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .logo-orb {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: conic-gradient(
+        from 210deg,
+        #ffb14a,
+        #ff5c7a,
+        #7c5cff,
+        #37e4ff,
+        #ffb14a
+      );
+      box-shadow: 0 0 24px rgba(255, 177, 74, 0.8);
+    }
+
+    .logo-text-main {
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      font-size: 13px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .logo-text-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .sidebar-card {
+      background: linear-gradient(145deg, #111429, #050614);
+      border-radius: var(--radius-xl);
+      padding: 16px 16px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      box-shadow: var(--shadow-subtle);
+      margin-bottom: 14px;
+    }
+
+    .sidebar-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .sidebar-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(255, 177, 74, 0.8);
+    }
+
+    .search-box {
+      position: relative;
+      margin-top: 10px;
+    }
+
+    .search-input {
+      width: 100%;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border);
+      background: #06071a;
+      padding: 8px 30px 8px 26px;
+      color: var(--text);
+      font-size: 12px;
+      outline: none;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+    }
+
+    .search-input::placeholder {
+      color: #666b8a;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      color: #666b8a;
+    }
+
+    .search-clear {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      cursor: pointer;
+      color: #666b8a;
+      display: none;
+    }
+
+    .search-clear.visible {
+      display: block;
+    }
+
+    .sidebar-section-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #7c80a0;
+      margin: 10px 0 4px;
+    }
+
+    .gsi-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .gsi-chip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 9px;
+      border-radius: 10px;
+      background: var(--chip-bg);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      cursor: pointer;
+      transition: background var(--transition-fast), border-color var(--transition-fast),
+        transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .gsi-chip:hover {
+      background: #1b1f35;
+      border-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.5);
+    }
+
+    .gsi-chip.active {
+      background: linear-gradient(135deg, #ffb14a1f, #7c5cff24);
+      border-color: var(--accent);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .gsi-chip-name {
+      font-weight: 500;
+    }
+
+    .gsi-chip-tags {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .tag-pill {
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--muted);
+    }
+
+    .heat-pill {
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 10px;
+      background: rgba(74, 222, 128, 0.1);
+      border: 1px solid rgba(74, 222, 128, 0.6);
+      color: #bbf7d0;
+    }
+
+    .filters-card {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(6, 7, 32, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(10, 12, 32, 0.9);
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background var(--transition-fast), border-color var(--transition-fast),
+        color var(--transition-fast);
+    }
+
+    .filter-chip input {
+      display: none;
+    }
+
+    .filter-chip.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: #ffe7bb;
+    }
+
+    .main {
+      padding: 18px 20px 24px;
+      overflow: auto;
+    }
+
+    .main-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .main-heading-block h1 {
+      font-size: 22px;
+      margin: 0 0 3px;
+    }
+
+    .main-heading-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(7, 10, 29, 0.95);
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge strong {
+      color: var(--text);
+    }
+
+    .chip-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4ade80;
+    }
+
+    .view-mode-tabs {
+      display: inline-flex;
+      padding: 3px;
+      border-radius: 999px;
+      background: rgba(10, 10, 30, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: var(--shadow-subtle);
+    }
+
+    .view-tab {
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background var(--transition-fast), color var(--transition-fast),
+        transform var(--transition-fast);
+    }
+
+    .view-tab.active {
+      background: radial-gradient(circle at top, #ffb14a33, #7c5cff33);
+      color: var(--text);
+      transform: translateY(-0.5px);
+    }
+
+    .layout-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr);
+      gap: 14px;
+    }
+
+    @media (max-width: 1080px) {
+      .layout-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      border-radius: var(--radius-xl);
+      background: radial-gradient(circle at top, #181b33 0, #070717 60%);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: var(--shadow-soft);
+      padding: 14px 16px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        circle at top right,
+        rgba(255, 177, 74, 0.12),
+        transparent 60%
+      );
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 8px;
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .panel-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .panel-body {
+      position: relative;
+      z-index: 1;
+      font-size: 12px;
+      color: #e0e3ff;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 6px 0 8px;
+    }
+
+    .meta-pill {
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .meta-pill strong {
+      color: var(--text);
+    }
+
+    .pill-highlight {
+      border-color: var(--accent);
+      background: rgba(255, 177, 74, 0.1);
+      color: #ffe5b0;
+    }
+
+    .section-heading {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #8589b0;
+      margin: 10px 0 4px;
+    }
+
+    ul {
+      padding-left: 18px;
+      margin: 2px 0 6px;
+    }
+
+    li {
+      margin: 2px 0;
+      line-height: 1.45;
+    }
+
+    .inline-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #8f93bc;
+    }
+
+    .equix-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 4px 0 8px;
+    }
+
+    .equix-chip {
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(8, 15, 42, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .equix-chip span {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .accordion {
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+      background: rgba(4, 6, 22, 0.9);
+      margin-top: 6px;
+    }
+
+    .accordion-item + .accordion-item {
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .accordion-header {
+      padding: 7px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-size: 12px;
+      background: linear-gradient(to right, rgba(255, 177, 74, 0.06), transparent);
+    }
+
+    .accordion-title {
+      font-weight: 500;
+    }
+
+    .accordion-icon {
+      font-size: 14px;
+      color: var(--muted);
+      transition: transform var(--transition-fast);
+    }
+
+    .accordion-header.open .accordion-icon {
+      transform: rotate(90deg);
+    }
+
+    .accordion-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.2s ease-out;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
+    .accordion-body-inner {
+      padding: 6px 0 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .usecase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .usecase-card {
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(4, 7, 26, 0.95);
+      padding: 8px 9px;
+      font-size: 11px;
+    }
+
+    .usecase-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca0c7;
+      margin-bottom: 2px;
+    }
+
+    .usecase-title {
+      font-weight: 600;
+      margin-bottom: 3px;
+      color: #f7f4ff;
+    }
+
+    .usecase-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 4px;
+      color: #a4accf;
+    }
+
+    .usecase-meta span {
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .footnote {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 10px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.08);
+      padding-top: 6px;
+    }
+
+    .footnote strong {
+      color: var(--accent);
+    }
+
+    .alert-strip {
+      margin-top: 8px;
+      font-size: 11px;
+      padding: 6px 9px;
+      border-radius: 10px;
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      background: rgba(5, 10, 35, 0.9);
+      color: var(--muted);
+    }
+
+    .alert-strip span {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .empty-state {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      background: rgba(3, 5, 22, 0.9);
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo-row">
+        <div class="logo-orb"></div>
+        <div>
+          <div class="logo-text-main">Equinix & Indian GSIs</div>
+          <div class="logo-text-sub">Distributed AI | Internal GTM Navigator</div>
+        </div>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="sidebar-title">Partner AI Integration Console</div>
+        <div class="sidebar-subtitle">
+          Explore how TCS, HCLTech, Wipro, and Infosys align with
+          <strong>Equinix Distributed AI</strong> across BFSI, manufacturing, healthcare, and retail.
+        </div>
+        <div class="pill">
+          <div class="pill-dot"></div>
+          <span>Use filters + GSIs on the left. Content updates live.</span>
+        </div>
+
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input
+            id="searchInput"
+            class="search-input"
+            type="text"
+            placeholder="Search use cases, verticals, or keywords…"
+          />
+          <span id="searchClear" class="search-clear">✕</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section-label">GSIs in Focus</div>
+      <div class="gsi-list" id="gsiList">
+        <button
+          class="gsi-chip active"
+          data-gsi-id="tcs"
+        >
+          <span class="gsi-chip-name">Tata Consultancy Services (TCS)</span>
+          <span class="gsi-chip-tags">
+            <span class="tag-pill">BFSI · Mfg · Healthcare</span>
+            <span class="heat-pill">AI infra-heavy</span>
+          </span>
+        </button>
+
+        <button
+          class="gsi-chip"
+          data-gsi-id="hcl"
+        >
+          <span class="gsi-chip-name">HCLTech</span>
+          <span class="gsi-chip-tags">
+            <span class="tag-pill">BFSI · Mfg · Life Sciences</span>
+            <span class="heat-pill">Engineering-led AI</span>
+          </span>
+        </button>
+
+        <button
+          class="gsi-chip"
+          data-gsi-id="wipro"
+        >
+          <span class="gsi-chip-name">Wipro</span>
+          <span class="gsi-chip-tags">
+            <span class="tag-pill">BFSI · Healthcare · Retail</span>
+            <span class="heat-pill">GenAI at scale</span>
+          </span>
+        </button>
+
+        <button
+          class="gsi-chip"
+          data-gsi-id="infosys"
+        >
+          <span class="gsi-chip-name">Infosys</span>
+          <span class="gsi-chip-tags">
+            <span class="tag-pill">BFSI · Mfg · Retail</span>
+            <span class="heat-pill">Topaz AI-first</span>
+          </span>
+        </button>
+      </div>
+
+      <div class="filters-card">
+        <div class="sidebar-section-label">Filter by Vertical</div>
+        <div class="filters-row" id="verticalFilters">
+          <label class="filter-chip active" data-vertical="all">
+            <input type="checkbox" checked />
+            <span>All</span>
+          </label>
+          <label class="filter-chip" data-vertical="bfsi">
+            <input type="checkbox" />
+            <span>BFSI</span>
+          </label>
+          <label class="filter-chip" data-vertical="manufacturing">
+            <input type="checkbox" />
+            <span>Manufacturing / Industrial</span>
+          </label>
+          <label class="filter-chip" data-vertical="healthcare">
+            <input type="checkbox" />
+            <span>Healthcare / Life Sciences</span>
+          </label>
+          <label class="filter-chip" data-vertical="retail">
+            <input type="checkbox" />
+            <span>Retail / CPG</span>
+          </label>
+        </div>
+
+        <div class="sidebar-section-label">AI Strategy Lens</div>
+        <div class="filters-row" id="strategyFilters">
+          <label class="filter-chip active" data-strategy="infra">
+            <input type="checkbox" />
+            <span>AI Infra & Edge</span>
+          </label>
+          <label class="filter-chip active" data-strategy="platforms">
+            <input type="checkbox" />
+            <span>AI Platforms & IP</span>
+          </label>
+          <label class="filter-chip active" data-strategy="vertical">
+            <input type="checkbox" />
+            <span>Vertical Solutions</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="alert-strip">
+        <span>Tip:</span> Treat this as a living GTM canvas. As deals surface, map
+        them mentally to a GSI, vertical, and Equinix capability on this page.
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+      <div class="main-top-row">
+        <div class="main-heading-block">
+          <h1 id="mainTitle">TCS × Equinix — Distributed AI GTM View</h1>
+          <div class="main-heading-sub" id="mainSubtitle">
+            Snapshot of TCS’s AI platforms, key vertical plays, and how Equinix
+            Distributed AI becomes the backbone for production-scale deployments.
+          </div>
+          <div class="badge-row">
+            <div class="badge">
+              <div class="chip-dot"></div>
+              <span><strong>Goal:</strong> Turn GSI AI portfolios into Equinix-powered joint offers.</span>
+            </div>
+            <div class="badge">
+              ⚙️ <strong>Use:</strong>&nbsp;Pre-meeting prep, internal enablement, quick pitch framing.
+            </div>
+          </div>
+        </div>
+
+        <div class="view-mode-tabs">
+          <button class="view-tab active" data-view-mode="overview">
+            GSI Overview
+          </button>
+          <button class="view-tab" data-view-mode="equix">
+            Equinix Integration
+          </button>
+          <button class="view-tab" data-view-mode="usecases">
+            Joint Use Cases
+          </button>
+        </div>
+      </div>
+
+      <div class="layout-grid">
+        <!-- LEFT PANEL: GSI OVERVIEW / AI OFFERINGS -->
+        <section class="panel" id="panelOverview">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title" id="overviewTitle">AI Platforms & Strategic Focus</div>
+              <div class="panel-sub" id="overviewSubtitle">
+                What this GSI is really doing with AI — not the marketing slide, the operating thesis.
+              </div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="meta-row" id="overviewMetaRow">
+              <!-- Filled dynamically -->
+            </div>
+
+            <div>
+              <div class="section-heading">AI Platforms & Offerings</div>
+              <div id="overviewPlatforms">
+                <!-- Filled dynamically -->
+              </div>
+
+              <div class="section-heading">Key Verticals & Anchor Use Cases</div>
+              <div id="overviewVerticals">
+                <!-- Filled dynamically -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- RIGHT PANEL: EQUINIX VIEW / USE CASES / QUESTIONS -->
+        <section class="panel" id="panelRight">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title" id="rightPanelTitle">Equinix Integration & GTM Levers</div>
+              <div class="panel-sub" id="rightPanelSubtitle">
+                How to plug this GSI’s AI stack into Platform Equinix and why the customer should care.
+              </div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="rightPanelContent">
+              <!-- Filled dynamically -->
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="footnote">
+        <strong>Note:</strong> This microsite is built from the internal PDF
+        “AI Offerings of Top Indian GSIs and Equinix Integration”. Always cross-check
+        with the latest GSI decks and Equinix product updates before walking
+        into a high-stakes meeting.
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // --- DATA MODEL (condensed from the PDF) ---------------------------------
+
+    const GSI_DATA = {
+      tcs: {
+        id: "tcs",
+        name: "Tata Consultancy Services (TCS)",
+        title: "TCS × Equinix — Distributed AI GTM View",
+        subtitle:
+          "TCS is pushing to be the world’s largest AI-led services firm, with a 1 GW AI data center and AI-infused vertical platforms across BFSI, manufacturing, healthcare, and retail.",
+        meta: [
+          { label: "AI Platforms", value: "Cognix · Machine First™ · BFSI & ops AI", type: "core" },
+          { label: "Verticals", value: "BFSI · Manufacturing · Healthcare · Retail", type: "neutral" },
+          { label: "Posture", value: "AI infra-heavy, wants global reach & sovereignty", type: "highlight" }
+        ],
+        aiPlatformsHtml: `
+          <ul>
+            <li><strong>TCS Cognix™</strong> – modular AI-driven operations platform with 100+ pre-built automations and AI “value builders” for IT and business operations, aligned to CFO and COO outcomes.</li>
+            <li><strong>Machine First™ Delivery</strong> – philosophy to embed AI and automation into interconnected business systems before throwing people at the problem.</li>
+            <li><strong>AI Culture & Scale</strong> – multi-billion dollar investment in a <strong>1&nbsp;GW AI data center in India</strong> and company-wide AI hackathons for 275k+ employees to push an “AI-first” mindset.</li>
+          </ul>
+        `,
+        verticalsHtml: `
+          <ul>
+            <li><strong>BFSI:</strong> core banking modernization, payments, fraud detection, and customer analytics. AI-led finance & accounting workflows and risk analytics for global banks and insurers.</li>
+            <li><strong>Healthcare:</strong> AI for NHS-style supply chain optimization, patient data analysis, and healthcare service bots.</li>
+            <li><strong>Manufacturing:</strong> Industry&nbsp;4.0 – IoT + AI for predictive maintenance, quality control, and real-time production monitoring in global plants.</li>
+            <li><strong>Retail & CPG:</strong> hyper-personalized recommendations, demand forecasting, and inventory optimization using AI models on consumer behavior data.</li>
+          </ul>
+        `,
+        equixHtml: `
+          <div class="inline-label">Equinix Levers</div>
+          <div class="equix-chip-row">
+            <span class="equix-chip"><span>Fabric:</span>&nbsp;multi-cloud + fintech ecosystem interconnect</span>
+            <span class="equix-chip"><span>Metal:</span>&nbsp;AI-ready bare metal for Cognix and BFSI platforms</span>
+            <span class="equix-chip"><span>IBX:</span>&nbsp;in-country sovereign AI deployment zones</span>
+          </div>
+
+          <div class="section-heading">How Equinix Extends TCS’s AI Ambition</div>
+          <ul>
+            <li><strong>Global spine for the India AI hub:</strong> connect the 1&nbsp;GW TCS AI data center in India to clients in 70+ metros via Equinix Fabric, so TCS can sell “global AI from an India core” without building data centers everywhere.</li>
+            <li><strong>Data-resident BFSI AI:</strong> deploy fraud detection and risk models in-country on Equinix IBX, keeping card and transaction data local while still drawing on cloud AI services through private, low-latency links.</li>
+            <li><strong>Smart factory edge:</strong> host predictive maintenance and computer-vision models on Metal nodes near industrial clusters to support TCS’s Industry&nbsp;4.0 projects with real-time analytics.</li>
+            <li><strong>Healthcare compliance:</strong> keep patient and supply-chain data within jurisdiction in Equinix while TCS runs AI for NHS-style logistics and clinical analytics, using cloud adjacency instead of full public-cloud exposure.</li>
+          </ul>
+
+          <div class="section-heading">Questions to Pressure-Test a TCS Opportunity</div>
+          <div class="accordion">
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <span class="accordion-title">BFSI / Data Sovereignty Tension</span>
+                <span class="accordion-icon">▶</span>
+              </div>
+              <div class="accordion-body">
+                <div class="accordion-body-inner">
+                  <ul>
+                    <li>“Which BFSI clients are blocked on AI due to <strong>data residency</strong> or regulator anxiety?”</li>
+                    <li>“Would an <strong>in-country AI zone</strong> on Equinix – connected to TCS and multiple clouds – unblock stalled pilots?”</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <span class="accordion-title">Scaling Cognix & AI Platforms Globally</span>
+                <span class="accordion-icon">▶</span>
+              </div>
+              <div class="accordion-body">
+                <div class="accordion-body-inner">
+                  <ul>
+                    <li>“How do you deploy Cognix or BFSI AI platforms for clients across continents <strong>without</strong> building infra region by region?”</li>
+                    <li>“What would change if Equinix provided a <strong>ready, compliant footprint</strong> in every target market?”</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+        usecases: [
+          {
+            id: "tcs-bfsi-fraud",
+            title: "Real-Time Fraud Detection at Financial Exchange Edge",
+            vertical: "bfsi",
+            strategy: ["infra", "vertical"],
+            summary:
+              "Deploy TCS fraud models on Equinix Metal adjacent to payment networks and exchanges, reducing fraud detection lag from minutes to seconds.",
+            bullets: [
+              "AI runs at Equinix locations where the bank connects to card schemes / payment switches.",
+              "Transaction streams never leave the country; only risk scores travel to central systems.",
+              "Ideal for large retail banks, payment processors, and card issuers."
+            ]
+          },
+          {
+            id: "tcs-mfg-predictive",
+            title: "Predictive Maintenance for Global Smart Factories",
+            vertical: "manufacturing",
+            strategy: ["infra", "vertical"],
+            summary:
+              "TCS Industry 4.0 analytics deployed on Equinix edge nodes close to plants, enabling real-time maintenance decisions.",
+            bullets: [
+              "Local edge compute ingests IoT streams for vibration, temperature, and image data.",
+              "Aggregated insights sync via Fabric to cloud analytics and TCS control towers.",
+              "Targets automotive, industrial, and aerospace manufacturers with high downtime costs."
+            ]
+          },
+          {
+            id: "tcs-health-supply",
+            title: "AI-Optimized Healthcare Supply Chain",
+            vertical: "healthcare",
+            strategy: ["platforms", "vertical"],
+            summary:
+              "TCS AI for NHS-style supply chains hosted on Equinix in-region for privacy and logistics performance.",
+            bullets: [
+              "Local IBX nodes store and process sensitive clinical and logistics data.",
+              "Cloud-adjacent analytics drive routing, stock levels, and SLA adherence.",
+              "Good for national health systems and large hospital networks."
+            ]
+          }
+        ]
+      },
+
+      hcl: {
+        id: "hcl",
+        name: "HCLTech",
+        title: "HCLTech × Equinix — Engineering-Led AI at the Edge",
+        subtitle:
+          "HCL blends infrastructure, product engineering, and AI platforms (AI Force, AI Foundry, DRYiCE) with deep BFSI, manufacturing, and healthcare plays.",
+        meta: [
+          { label: "AI Platforms", value: "AI Force · AI Foundry · DRYiCE", type: "core" },
+          { label: "Verticals", value: "BFSI · Industrial · Life Sciences / Healthcare", type: "neutral" },
+          { label: "Posture", value: "Physical AI, robotics, and compliance-heavy BFSI AI", type: "highlight" }
+        ],
+        aiPlatformsHtml: `
+          <ul>
+            <li><strong>AI&nbsp;Force:</strong> GenAI platform suite for software engineering, AIOps, and business processes – self-healing infra, AI code generation, and agentic automation.</li>
+            <li><strong>AI&nbsp;Foundry:</strong> managed services framework to build and operate vertical LLMs and repeatable AI IP for industries like BFSI and healthcare.</li>
+            <li><strong>DRYiCE:</strong> AIOps and automation products (e.g. DRYiCE Lucy assistant) to automate IT and business processes for large enterprises.</li>
+            <li><strong>Physical AI Lab with NVIDIA:</strong> focus on robotics, digital twins, and “AI for hardware” in industrial and manufacturing environments.</li>
+          </ul>
+        `,
+        verticalsHtml: `
+          <ul>
+            <li><strong>BFSI:</strong> 40+ AI use cases in production; GenAI trade surveillance co-pilots, financial crime compliance, KYC automation, and AI-rich wealth/insurance platforms.</li>
+            <li><strong>Manufacturing / Industrial:</strong> Industry&nbsp;4.0 projects, IoT analytics, computer-vision quality inspection, and digital twins for factories.</li>
+            <li><strong>Life Sciences / Healthcare:</strong> AI for diagnostics, patient experience, claims and R&D analytics across pharma and providers.</li>
+          </ul>
+        `,
+        equixHtml: `
+          <div class="inline-label">Equinix Levers</div>
+          <div class="equix-chip-row">
+            <span class="equix-chip"><span>Fabric:</span>&nbsp;bridge legacy core, cloud AI, and partner data</span>
+            <span class="equix-chip"><span>Metal:</span>&nbsp;GPU nodes for AI&nbsp;Force & Physical AI workloads</span>
+            <span class="equix-chip"><span>IBX:</span>&nbsp;sovereign landing zones for FCC and health data</span>
+          </div>
+
+          <div class="section-heading">How Equinix Amplifies HCL’s AI Story</div>
+          <ul>
+            <li><strong>FCC-as-a-service hubs:</strong> run HCL’s financial crime compliance AI in Equinix hubs close to major financial centers, pulling in partner data (sanctions, KYC) via private interconnects.</li>
+            <li><strong>Hybrid core banking modernization:</strong> keep core systems and sensitive ledgers in private cages while AI analytics and GenAI co-pilots reach out to multi-cloud through Fabric.</li>
+            <li><strong>Physical AI at the factory edge:</strong> deploy computer vision, robotics control, and digital twin services on GPU-ready Metal near factories to avoid cloud latency for closed-loop automation.</li>
+            <li><strong>Healthcare data hubs:</strong> host data lakes and AI services in-region for hospitals/pharma, letting HCL run analytics without moving PHI to public cloud.</li>
+          </ul>
+
+          <div class="section-heading">Questions to Use with HCL</div>
+          <div class="accordion">
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <span class="accordion-title">Scaling AI Force & AI Foundry</span>
+                <span class="accordion-icon">▶</span>
+              </div>
+              <div class="accordion-body">
+                <div class="accordion-body-inner">
+                  <ul>
+                    <li>“Where do clients hit <strong>latency</strong> or <strong>data residency</strong> walls when you roll out AI Force or AI Foundry?”</li>
+                    <li>“What if we made Equinix the default landing zone for AI deployments across regions?”</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <span class="accordion-title">BFSI & FCC Plays</span>
+                <span class="accordion-icon">▶</span>
+              </div>
+              <div class="accordion-body">
+                <div class="accordion-body-inner">
+                  <ul>
+                    <li>“Which banks are ready to centralize FCC on shared, but neutral infrastructure?”</li>
+                    <li>“Can we position Equinix hubs as <strong>regulator-friendly FCC exchanges</strong> with HCL AI on top?”</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+        usecases: [
+          {
+            id: "hcl-fcc",
+            title: "Financial Crime Compliance Hub",
+            vertical: "bfsi",
+            strategy: ["infra", "platforms"],
+            summary:
+              "HCL FCC platform deployed on Equinix in major financial hubs, consuming data feeds and running GenAI co-pilots for compliance teams.",
+            bullets: [
+              "Neutral Equinix hubs connect to card networks, SWIFT, bureaus via private links.",
+              "AI Force and partner tools (e.g., NICE Actimize) run in-region for compliance comfort.",
+              "Targets global banks rethinking FCC operating models."
+            ]
+          },
+          {
+            id: "hcl-physical-ai",
+            title: "Physical AI Edge for Automotive Plants",
+            vertical: "manufacturing",
+            strategy: ["infra", "vertical"],
+            summary:
+              "Computer-vision inspection and robotics guidance running on GPU Metal nodes near automotive plants.",
+            bullets: [
+              "Low-latency feedback loops for weld, paint, or assembly quality.",
+              "Digital twin simulations executed close to OT systems, synced to cloud only for training.",
+              "Targets multinational OEMs and Tier-1 suppliers."
+            ]
+          },
+          {
+            id: "hcl-health-datahub",
+            title: "Healthcare AI Data Hub",
+            vertical: "healthcare",
+            strategy: ["platforms", "vertical"],
+            summary:
+              "Regional Equinix hubs host PHI-compliant data stores and HCL AI services for providers and pharma.",
+            bullets: [
+              "Hospitals connect EHR, imaging, and IoT devices via private links.",
+              "AI supports triage, capacity planning, and R&D analytics without leaving jurisdiction.",
+              "Good entry point where cloud-only models fail compliance checks."
+            ]
+          }
+        ]
+      },
+
+      wipro: {
+        id: "wipro",
+        name: "Wipro",
+        title: "Wipro × Equinix — AI-First Services on a Distributed Spine",
+        subtitle:
+          "Wipro ai360, HOLMES, and Wipro Intelligence™ aim to infuse AI across IT, business processes, and vertical solutions with strong cloud partnerships.",
+        meta: [
+          { label: "AI Platforms", value: "Wipro ai360 · HOLMES · Wipro Intelligence™", type: "core" },
+          { label: "Verticals", value: "BFSI · Healthcare · Manufacturing · Retail", type: "neutral" },
+          { label: "Posture", value: "GenAI co-pilots + multi-cloud delivery", type: "highlight" }
+        ],
+        aiPlatformsHtml: `
+          <ul>
+            <li><strong>Wipro ai360:</strong> $1&nbsp;billion AI program to make Wipro an AI-first company and embed AI into every solution and role.</li>
+            <li><strong>HOLMES:</strong> cognitive and automation suite (chatbots, vision, predictive analytics) used across IT ops, business processes, and industry plays.</li>
+            <li><strong>Wipro Intelligence™ & WEGA:</strong> unified AI platform and tools for building, governing, and scaling AI solutions, including GenAI accelerators like WINGS for IT ops.</li>
+          </ul>
+        `,
+        verticalsHtml: `
+          <ul>
+            <li><strong>BFSI:</strong> AI for retail and wealth banking (Holmes for Wealth), fraud detection, risk compliance, and personalized assistants, amplified through domain expertise (e.g. Capco).</li>
+            <li><strong>Healthcare:</strong> Wipro PayerAI for AI-driven claims, member services, and payer analytics; virtual health assistants and PHI-aware AI deployments.</li>
+            <li><strong>Manufacturing & Energy:</strong> Industrial AssetsAI for predictive maintenance; AI-driven quality inspection and Industry&nbsp;4.0 initiatives.</li>
+            <li><strong>Retail:</strong> GenAI chatbots for product discovery, AI-powered demand forecasting and inventory optimization, and AI analytics for voice/text-based customer service.</li>
+          </ul>
+        `,
+        equixHtml: `
+          <div class="inline-label">Equinix Levers</div>
+          <div class="equix-chip-row">
+            <span class="equix-chip"><span>Fabric:</span>&nbsp;multi-cloud backbone for FullStride engagements</span>
+            <span class="equix-chip"><span>Metal:</span>&nbsp;GenAI inference near users (chatbots, co-pilots)</span>
+            <span class="equix-chip"><span>AI Labs:</span>&nbsp;global demo and co-innovation environments</span>
+          </div>
+
+          <div class="section-heading">How Equinix Powers Wipro’s AI-First Ambitions</div>
+          <ul>
+            <li><strong>Multi-cloud made sane:</strong> Wipro’s FullStride journeys become easier to operate when apps, data, and AI components are stitched together via Fabric instead of ad-hoc VPNs.</li>
+            <li><strong>Low-latency GenAI:</strong> deploy HOLMES-based assistants and Industry 4.0 models on Equinix edge for real-time experiences in banking apps, retail sites, and factory floors.</li>
+            <li><strong>Data-local AI for BFSI/healthcare:</strong> place KYC/AML and PayerAI engines inside country borders on Equinix; connect out to Azure OpenAI or other cloud models without breaching residency rules.</li>
+            <li><strong>Co-innovation acceleration:</strong> use Equinix AI Solution Validation Centers as extended Lab45/GenAI labs for live, multi-party demonstrations using real data paths.</li>
+          </ul>
+
+          <div class="section-heading">Questions to Anchor Wipro Conversations</div>
+          <div class="accordion">
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <span class="accordion-title">GenAI Performance & UX</span>
+                <span class="accordion-icon">▶</span>
+              </div>
+              <div class="accordion-body">
+                <div class="accordion-body-inner">
+                  <ul>
+                    <li>“Where are your GenAI assistants too slow or too expensive because they live far from the user or data?”</li>
+                    <li>“What if we put inference on Equinix edge nodes next to the bank, retailer, or plant?”</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <span class="accordion-title">Data Residency Anxiety</span>
+                <span class="accordion-icon">▶</span>
+              </div>
+              <div class="accordion-body">
+                <div class="accordion-body-inner">
+                  <ul>
+                    <li>“Which BFSI / health clients are blocking GenAI because they won’t allow sensitive logs or PHI to leave country?”</li>
+                    <li>“Can we position an <strong>Equinix-hosted HOLMES/PayerAI</strong> model as a compliance-friendly middle ground?”</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+        usecases: [
+          {
+            id: "wipro-banking-assistant",
+            title: "Personalized Banking & Wealth GenAI Assistant",
+            vertical: "bfsi",
+            strategy: ["platforms", "vertical"],
+            summary:
+              "HOLMES + OpenAI-style models hosted on Equinix, directly connected to bank data for compliant, low-latency customer interactions.",
+            bullets: [
+              "Inference runs on Equinix next to the bank’s core systems via private links.",
+              "Customer data stays in-country; only prompts/responses traverse secured paths.",
+              "Targets retail and wealth banks seeking better digital CX without cloud lock-in."
+            ]
+          },
+          {
+            id: "wipro-payerai",
+            title: "Equinix-Hosted PayerAI for Health Insurers",
+            vertical: "healthcare",
+            strategy: ["platforms", "infra"],
+            summary:
+              "Claims and member services AI runs inside Equinix PHI-compliant deployments, integrated with payer systems.",
+            bullets: [
+              "Reduces claims processing time while keeping health data off the open internet.",
+              "Supports multi-cloud analytics while anchoring regulated data in one place.",
+              "Good wedge into payers stuck in on-prem mainframe + BPO modes."
+            ]
+          },
+          {
+            id: "wipro-retail-genai",
+            title: "Retail GenAI Sales & Service Layer",
+            vertical: "retail",
+            strategy: ["vertical", "infra"],
+            summary:
+              "E-commerce GenAI assistant and voice analytics engine deployed on Equinix near the retailer’s core stack.",
+            bullets: [
+              "Faster response times vs. single remote cloud region.",
+              "Private access to order, inventory, and loyalty data improves personalization.",
+              "Targets omni-channel retailers who already see AI-driven uplift but fear latency or data leakage."
+            ]
+          }
+        ]
+      },
+
+      infosys: {
+        id: "infosys",
+        name: "Infosys",
+        title: "Infosys × Equinix — Topaz AI on a Global Landing Zone",
+        subtitle:
+          "Infosys Topaz packages 12k+ AI use cases and 150+ models, targeting AI-for-growth, core automation, and data foundations across BFSI, manufacturing, retail, and more.",
+        meta: [
+          { label: "AI Platforms", value: "Infosys Topaz · Cobalt (cloud) · Agentic AI Foundry", type: "core" },
+          { label: "Verticals", value: "BFSI · Manufacturing · Retail · Telecom · Healthcare", type: "neutral" },
+          { label: "Posture", value: "AI-first, responsible-by-design, multi-cloud", type: "highlight" }
+        ],
+        aiPlatformsHtml: `
+          <ul>
+            <li><strong>Infosys Topaz:</strong> suite of AI services, solutions, and platforms with 12k+ use cases and 150+ models, organized as AI for Growth, Core, and Foundation.</li>
+            <li><strong>Cobalt:</strong> multi-cloud platform underpinning Topaz deployments for cloud-native, compliant architectures.</li>
+            <li><strong>Agentic AI Foundry & Topaz Fabric:</strong> initiatives to build agentic AI systems and connect AI building blocks more easily across enterprise estates.</li>
+          </ul>
+        `,
+        verticalsHtml: `
+          <ul>
+            <li><strong>BFSI:</strong> AI-powered core banking (Finacle), fraud detection, customer service automation, and underwriting; a British bank use case cut 2,000+ processes from a week to seconds.</li>
+            <li><strong>Manufacturing & Logistics:</strong> AI-driven logistics hubs (e.g., national railway), demand forecasting, inventory optimization, and predictive maintenance.</li>
+            <li><strong>Retail & CPG:</strong> hyper-personalized experiences, demand/supply analytics, and GenAI content for marketing and product descriptions.</li>
+            <li><strong>Healthcare & Life Sciences:</strong> AI-first transformation for payers (e.g., Molina Healthcare), clinical data analytics, and trial/drug discovery support.</li>
+          </ul>
+        `,
+        equixHtml: `
+          <div class="inline-label">Equinix Levers</div>
+          <div class="equix-chip-row">
+            <span class="equix-chip"><span>AI Landing Zones:</span>&nbsp;Topaz-ready data hubs</span>
+            <span class="equix-chip"><span>Fabric:</span>&nbsp;connect ERP/CRM/IoT into one AI core</span>
+            <span class="equix-chip"><span>Metal:</span>&nbsp;GPU pools for model training & inference</span>
+          </div>
+
+          <div class="section-heading">Equinix as Topaz’s Default Infrastructure Pattern</div>
+          <ul>
+            <li><strong>AI Landing Zone:</strong> position Equinix as the place where clients consolidate ERP, CRM, IoT, and external data via private links before Topaz models touch it – keeping data off the public internet.</li>
+            <li><strong>Global rollout backbone:</strong> deploy Topaz inference nodes in multiple regions on Equinix, linked via Fabric, to serve multinational clients with consistent latency and local compliance.</li>
+            <li><strong>Cloud-adjacent AI for risk-averse clients:</strong> keep core data in Equinix cages while connecting to Azure/AWS/GCP AI services nearby, aligning with “responsible by design” principles.</li>
+            <li><strong>Innovation sandbox:</strong> use Equinix + AI hardware partners as a global playground where Infosys validates new Topaz components with realistic, multi-cloud traffic patterns.</li>
+          </ul>
+
+          <div class="section-heading">Questions for Infosys Stakeholders</div>
+          <div class="accordion">
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <span class="accordion-title">Landing Zone & Data Architecture</span>
+                <span class="accordion-icon">▶</span>
+              </div>
+              <div class="accordion-body">
+                <div class="accordion-body-inner">
+                  <ul>
+                    <li>“For Topaz deployments, where do data architecture issues slow you down the most?”</li>
+                    <li>“Would a standard <strong>Equinix-based AI landing zone</strong> help you repeat success faster across clients?”</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <div class="accordion-header">
+                <span class="accordion-title">Scaling Beyond Pilots</span>
+                <span class="accordion-icon">▶</span>
+              </div>
+              <div class="accordion-body">
+                <div class="accordion-body-inner">
+                  <ul>
+                    <li>“Which AI wins are stuck at POC because infra or compliance can’t scale?”</li>
+                    <li>“Can we define a <strong>Topaz on Equinix</strong> reference architecture to take into those accounts?”</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+        usecases: [
+          {
+            id: "inf-bfsi-core",
+            title: "AI-Enhanced Core Banking with Finacle & Topaz",
+            vertical: "bfsi",
+            strategy: ["platforms", "infra", "vertical"],
+            summary:
+              "Finacle core + Topaz AI modules deployed on Equinix to modernize banking operations with fraud detection and real-time CX.",
+            bullets: [
+              "Core data stays in sovereign Equinix cages; AI modules consume via private links.",
+              "Multi-cloud AI (e.g., Azure OpenAI) connected through Fabric for specific tasks.",
+              "Ideal for Tier-1/Tier-2 banks stuck on legacy cores but hungry for AI."
+            ]
+          },
+          {
+            id: "inf-smart-supply",
+            title: "Smart Supply Chain Logistics Hub",
+            vertical: "manufacturing",
+            strategy: ["infra", "vertical"],
+            summary:
+              "Infosys Topaz supply chain AI hosted on Equinix to optimize routing, inventory, and logistics for manufacturers and rail/logistics firms.",
+            bullets: [
+              "Data from suppliers, plants, and logistics providers flows into Equinix hubs.",
+              "AI engines compute near real-time plans and push decisions out via Fabric.",
+              "Good for national railways, global manufacturers, and 3PLs."
+            ]
+          },
+          {
+            id: "inf-health-ai",
+            title: "AI-First Healthcare Modernization Hub",
+            vertical: "healthcare",
+            strategy: ["platforms", "vertical"],
+            summary:
+              "Topaz-based analytics and member-care AI deployed on Equinix for payers/providers modernizing into AI-first operations.",
+            bullets: [
+              "PHI stored and processed locally in compliance with regulations.",
+              "Cloud AI services are used via adjacency; data doesn’t traverse the open internet.",
+              "Targets payers like Molina-style modernizations and hospital networks."
+            ]
+          }
+        ]
+      }
+    };
+
+    // --- VIEW STATE -----------------------------------------------------------
+
+    let currentGsiId = "tcs";
+    let currentViewMode = "overview"; // overview | equix | usecases
+    let activeVerticalFilter = "all"; // all | bfsi | manufacturing | healthcare | retail
+    let activeStrategies = new Set(["infra", "platforms", "vertical"]);
+    let searchTerm = "";
+
+    const gsiListEl = document.getElementById("gsiList");
+    const mainTitleEl = document.getElementById("mainTitle");
+    const mainSubtitleEl = document.getElementById("mainSubtitle");
+    const overviewMetaRowEl = document.getElementById("overviewMetaRow");
+    const overviewPlatformsEl = document.getElementById("overviewPlatforms");
+    const overviewVerticalsEl = document.getElementById("overviewVerticals");
+    const rightPanelTitleEl = document.getElementById("rightPanelTitle");
+    const rightPanelSubtitleEl = document.getElementById("rightPanelSubtitle");
+    const rightPanelContentEl = document.getElementById("rightPanelContent");
+    const panelOverviewEl = document.getElementById("panelOverview");
+    const panelRightEl = document.getElementById("panelRight");
+
+    const searchInputEl = document.getElementById("searchInput");
+    const searchClearEl = document.getElementById("searchClear");
+
+    // --- RENDERING ------------------------------------------------------------
+
+    function render() {
+      const gsi = GSI_DATA[currentGsiId];
+      if (!gsi) return;
+
+      // Title & subtitle
+      mainTitleEl.textContent = gsi.title;
+      mainSubtitleEl.textContent = gsi.subtitle;
+
+      // Meta pills
+      overviewMetaRowEl.innerHTML = "";
+      gsi.meta.forEach((m) => {
+        const pill = document.createElement("div");
+        pill.className = "meta-pill" + (m.type === "highlight" ? " pill-highlight" : "");
+        pill.innerHTML = `<strong>${m.label}:</strong> ${m.value}`;
+        overviewMetaRowEl.appendChild(pill);
+      });
+
+      // Overview panels always show AI platforms + verticals
+      overviewPlatformsEl.innerHTML = gsi.aiPlatformsHtml;
+      overviewVerticalsEl.innerHTML = gsi.verticalsHtml;
+
+      // Right panel depends on view mode
+      if (currentViewMode === "overview") {
+        rightPanelTitleEl.textContent = "Why This GSI Matters for Equinix";
+        rightPanelSubtitleEl.textContent =
+          "Use this as a quick narrative builder: where they’re strong, where Equinix quietly makes them stronger.";
+        rightPanelContentEl.innerHTML = `
+          <div class="section-heading">Fast Narrative Primer</div>
+          <p style="font-size:12px; line-height:1.5;">
+            <strong>${gsi.name}</strong> already has a credible AI story. Your job is not to compete with that – 
+            it’s to stitch in Platform Equinix as the <strong>invisible infrastructure advantage</strong>: 
+            global reach, data residency comfort, and low-latency AI at the edge.
+          </p>
+          <p style="font-size:12px; line-height:1.5;">
+            Before a call, scan their AI platforms, top verticals, and your local Equinix footprint. The question to keep 
+            in your head: “<em>If this GSI won the deal without us, what would go wrong in production that we fix?</em>”
+          </p>
+          <div class="alert-strip">
+            <span>Action:</span> In your notes, write one crisp sentence: 
+            “${gsi.name} brings the AI; Equinix brings &lt;insert infra edge&gt;.” 
+            If you can’t complete that sentence, you don’t have a pitch yet.
+          </div>
+        `;
+      } else if (currentViewMode === "equix") {
+        rightPanelTitleEl.textContent = "Equinix Integration & GTM Levers";
+        rightPanelSubtitleEl.textContent =
+          "Concrete ways to position Platform Equinix as the default backbone for this GSI’s AI portfolio.";
+        rightPanelContentEl.innerHTML = gsi.equixHtml;
+        attachAccordionHandlers(rightPanelContentEl);
+      } else if (currentViewMode === "usecases") {
+        rightPanelTitleEl.textContent = "Joint GTM Use Cases";
+        rightPanelSubtitleEl.textContent =
+          "Filter by vertical and strategy to identify 1–2 joint offers you can push this quarter.";
+        renderUseCases(gsi);
+      }
+
+      // Update sidebar chip active state
+      document.querySelectorAll(".gsi-chip").forEach((chip) => {
+        chip.classList.toggle("active", chip.dataset.gsiId === currentGsiId);
+      });
+
+      // Highlight view tabs
+      document.querySelectorAll(".view-tab").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.viewMode === currentViewMode);
+      });
+
+      // Make sure accordions work in overview panel (for some GSIs)
+      attachAccordionHandlers(panelOverviewEl);
+    }
+
+    function renderUseCases(gsi) {
+      const filtered = (gsi.usecases || []).filter((uc) => {
+        if (activeVerticalFilter !== "all" && uc.vertical !== activeVerticalFilter) return false;
+        if (searchTerm) {
+          const haystack =
+            (uc.title + " " + uc.summary + " " + (uc.bullets || []).join(" ")).toLowerCase();
+          if (!haystack.includes(searchTerm.toLowerCase())) return false;
+        }
+        if (activeStrategies.size > 0) {
+          const overlap = uc.strategy.some((s) => activeStrategies.has(s));
+          if (!overlap) return false;
+        }
+        return true;
+      });
+
+      if (!filtered.length) {
+        rightPanelContentEl.innerHTML = `
+          <div class="empty-state">
+            No use cases match the current filters. Try switching verticals or relaxing strategy filters.
+            If you’re in front of a customer, pick the closest vertical anyway – reality is messier than this UI.
+          </div>
+        `;
+        return;
+      }
+
+      const grid = document.createElement("div");
+      grid.className = "usecase-grid";
+
+      filtered.forEach((uc) => {
+        const card = document.createElement("div");
+        card.className = "usecase-card";
+        card.innerHTML = `
+          <div class="usecase-label">${uc.vertical.toUpperCase()}</div>
+          <div class="usecase-title">${uc.title}</div>
+          <div style="margin-top:4px;">${uc.summary}</div>
+          <ul style="margin-top:4px;">
+            ${uc.bullets.map((b) => `<li>${b}</li>`).join("")}
+          </ul>
+          <div class="usecase-meta">
+            ${uc.strategy
+              .map((s) => {
+                if (s === "infra") return "<span>⚙️ Infra / Edge</span>";
+                if (s === "platforms") return "<span>🧩 Platforms / IP</span>";
+                if (s === "vertical") return "<span>🏭 Vertical Story</span>";
+                return `<span>${s}</span>`;
+              })
+              .join("")}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      rightPanelContentEl.innerHTML = "";
+      const label = document.createElement("div");
+      label.className = "inline-label";
+      label.textContent = "Shortlist 1–2 plays and turn them into real pipeline, not just strategy slides.";
+      rightPanelContentEl.appendChild(label);
+      rightPanelContentEl.appendChild(grid);
+    }
+
+    // --- ACCORDION HANDLERS --------------------------------------------------
+
+    function attachAccordionHandlers(root) {
+      const headers = root.querySelectorAll(".accordion-header");
+      headers.forEach((header) => {
+        header.onclick = () => {
+          const body = header.nextElementSibling;
+          const icon = header.querySelector(".accordion-icon");
+          const open = header.classList.contains("open");
+          if (open) {
+            header.classList.remove("open");
+            body.style.maxHeight = "0px";
+          } else {
+            header.classList.add("open");
+            body.style.maxHeight = body.scrollHeight + "px";
+          }
+        };
+      });
+
+      // Auto-open first item if present
+      const firstHeader = root.querySelector(".accordion-header");
+      if (firstHeader && !firstHeader.classList.contains("open")) {
+        firstHeader.click();
+      }
+    }
+
+    // --- EVENT LISTENERS -----------------------------------------------------
+
+    // GSI chip switching
+    gsiListEl.addEventListener("click", (e) => {
+      const chip = e.target.closest(".gsi-chip");
+      if (!chip) return;
+      const id = chip.dataset.gsiId;
+      if (!id || id === currentGsiId) return;
+      currentGsiId = id;
+      render();
+    });
+
+    // View mode tabs
+    document.querySelectorAll(".view-tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const mode = btn.dataset.viewMode;
+        if (!mode || mode === currentViewMode) return;
+        currentViewMode = mode;
+        render();
+      });
+    });
+
+    // Vertical filters
+    document.getElementById("verticalFilters").addEventListener("click", (e) => {
+      const chip = e.target.closest(".filter-chip");
+      if (!chip) return;
+      const v = chip.dataset.vertical;
+      if (!v) return;
+
+      // "All" behaves as reset
+      document.querySelectorAll("#verticalFilters .filter-chip").forEach((c) =>
+        c.classList.remove("active")
+      );
+      chip.classList.add("active");
+      activeVerticalFilter = v;
+      render();
+    });
+
+    // Strategy filters (multi-select)
+    document.getElementById("strategyFilters").addEventListener("click", (e) => {
+      const chip = e.target.closest(".filter-chip");
+      if (!chip) return;
+      const s = chip.dataset.strategy;
+      if (!s) return;
+
+      if (chip.classList.contains("active")) {
+        chip.classList.remove("active");
+        activeStrategies.delete(s);
+      } else {
+        chip.classList.add("active");
+        activeStrategies.add(s);
+      }
+
+      // If nothing selected, fall back to all
+      if (activeStrategies.size === 0) {
+        ["infra", "platforms", "vertical"].forEach((k) => activeStrategies.add(k));
+        document
+          .querySelectorAll("#strategyFilters .filter-chip")
+          .forEach((c) => c.classList.add("active"));
+      }
+
+      if (currentViewMode === "usecases") render();
+    });
+
+    // Search
+    searchInputEl.addEventListener("input", () => {
+      searchTerm = searchInputEl.value.trim();
+      searchClearEl.classList.toggle("visible", !!searchTerm);
+      if (currentViewMode === "usecases") render();
+    });
+
+    searchClearEl.addEventListener("click", () => {
+      searchTerm = "";
+      searchInputEl.value = "";
+      searchClearEl.classList.remove("visible");
+      if (currentViewMode === "usecases") render();
+    });
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
