@@ -1,7 +1,6 @@
 import os
 import google.generativeai as genai # Or import openai
 from datetime import datetime
-
 # 1. Setup API (Get key from aistudio.google.com)
 genai.configure(api_key=os.environ[""])
 
