@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Equinix × GSIs | AI Value Proposition Matrix</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #050814;
+      --bg2: #090f25;
+      --panel: #121933;
+      --panel2: #151d3f;
+      --card: #171f46;
+      --accent: #7aa2ff;
+      --accent2: #41d6b0;
+      --border: #273268;
+      --text: #eef1ff;
+      --muted: #a5aed6;
+      --danger: #ff6b81;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #151c3f 0, #050814 55%);
+      color: var(--text);
+    }
+
+    .shell {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 18px 18px 32px;
+    }
+
+    header {
+      border-radius: 18px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      background: linear-gradient(120deg, rgba(122, 162, 255, 0.26), rgba(65, 214, 176, 0.12));
+      border: 1px solid rgba(122, 162, 255, 0.5);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: radial-gradient(circle at 20% 0, #ffffff, #ffe9f5 12%, #7aa2ff 40%, #41d6b0 100%);
+      display: grid;
+      place-items: center;
+      color: #050814;
+      font-weight: 800;
+      font-size: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .hdr-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    input[type="search"],
+    select,
+    button {
+      font: inherit;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(5, 8, 20, 0.6);
+      color: var(--text);
+      padding: 8px 11px;
+      outline: none;
+    }
+
+    input[type="search"] {
+      min-width: 200px;
+    }
+
+    input[type="search"]::placeholder {
+      color: var(--muted);
+    }
+
+    button {
+      cursor: pointer;
+      background: linear-gradient(135deg, rgba(122, 162, 255, 0.08), rgba(65, 214, 176, 0.05));
+    }
+
+    button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 18px;
+    }
+
+    @media (max-width: 950px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    aside {
+      background: var(--bg2);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      padding: 14px;
+      position: sticky;
+      top: 10px;
+      align-self: flex-start;
+    }
+
+    .aside-title {
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .gsi-tabs,
+    .domain-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .tab,
+    .chip {
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      cursor: pointer;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab span.badge {
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(122, 162, 255, 0.12);
+    }
+
+    .tab.active,
+    .chip.active {
+      border-color: var(--accent);
+      color: var(--text);
+      box-shadow: 0 0 0 1px rgba(122, 162, 255, 0.4);
+      background: linear-gradient(135deg, rgba(122, 162, 255, 0.26), rgba(65, 214, 176, 0.1));
+    }
+
+    .legend {
+      font-size: 11px;
+      color: var(--muted);
+      border-top: 1px dashed var(--border);
+      margin-top: 10px;
+      padding-top: 8px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-right: 6px;
+      margin-bottom: 4px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .legend-dot.ai {
+      background: var(--accent2);
+    }
+
+    .legend-dot.eqx {
+      background: var(--danger);
+    }
+
+    .matrix-summary {
+      background: var(--panel);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      margin-bottom: 14px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .summary-grid div {
+      background: var(--card);
+      border-radius: var(--radius-md);
+      padding: 6px 8px;
+      border: 1px solid rgba(39, 50, 104, 0.8);
+    }
+
+    .summary-grid b {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+
+    .cards {
+      display: grid;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--panel2);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: radial-gradient(circle at top left, rgba(122, 162, 255, 0.3), transparent 55%);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .card-title {
+      font-size: 15px;
+      margin: 0 0 2px;
+    }
+
+    .card-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .pill-mini {
+      font-size: 11px;
+      border-radius: 999px;
+      padding: 3px 8px;
+      border: 1px solid rgba(122, 162, 255, 0.6);
+      background: rgba(5, 8, 20, 0.4);
+    }
+
+    .card-body {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0;
+    }
+
+    @media (max-width: 900px) {
+      .card-body {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .col {
+      padding: 12px 14px;
+      border-right: 1px solid var(--border);
+    }
+
+    .col:last-child {
+      border-right: none;
+    }
+
+    @media (max-width: 900px) {
+      .col {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .col:last-child {
+        border-bottom: none;
+      }
+    }
+
+    .col h3 {
+      margin: 0 0 6px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 16px;
+      font-size: 13px;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+
+    .card-footer {
+      border-top: 1px solid var(--border);
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      background: rgba(5, 8, 20, 0.6);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .card-footer button {
+      border-radius: 999px;
+      font-size: 11px;
+      padding: 5px 9px;
+    }
+
+    .empty {
+      padding: 20px 10px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      border-radius: var(--radius-md);
+      border: 1px dashed var(--border);
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <div class="logo">E×</div>
+        <div>
+          <h1>Equinix × GSIs — AI Value Proposition Matrix</h1>
+          <div class="subtitle">
+            GSI Capability × AI Shift × Equinix Advantage across 4 delivery domains.
+          </div>
+        </div>
+      </div>
+      <div class="hdr-controls">
+        <input id="search" type="search" placeholder="Search by use case, tech, or outcome…" />
+        <select id="sort">
+          <option value="default">Sort: Domain order</option>
+          <option value="gsi">Sort: GSI name</option>
+        </select>
+        <button id="btnCopy">Copy visible matrix</button>
+      </div>
+    </header>
+
+    <main>
+      <aside>
+        <div class="aside-title">Global System Integrators</div>
+        <div class="gsi-tabs" id="gsiTabs">
+          <!-- filled by JS -->
+        </div>
+
+        <div class="aside-title">Domains</div>
+        <div class="domain-chips" id="domainChips">
+          <!-- filled by JS -->
+        </div>
+
+        <div class="matrix-summary" id="summaryBox">
+          <div class="summary-grid">
+            <div>
+              <b>GSI Capability</b>
+              What each partner already does well in this domain.
+            </div>
+            <div>
+              <b>AI Shift</b>
+              How GenAI & ML are transforming their service model.
+            </div>
+            <div>
+              <b>Equinix Advantage</b>
+              Where neutral, AI-ready digital infrastructure multiplies impact.
+            </div>
+          </div>
+        </div>
+
+        <div class="legend">
+          <span><span class="legend-dot"></span> GSI Capability</span>
+          <span><span class="legend-dot ai"></span> AI Shift</span>
+          <span><span class="legend-dot eqx"></span> Equinix Advantage</span>
+        </div>
+      </aside>
+
+      <section class="cards" id="cardContainer">
+        <!-- cards injected via JS -->
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const DOM = {
+      cards: document.getElementById("cardContainer"),
+      gsiTabs: document.getElementById("gsiTabs"),
+      domainChips: document.getElementById("domainChips"),
+      search: document.getElementById("search"),
+      sort: document.getElementById("sort"),
+      btnCopy: document.getElementById("btnCopy")
+    };
+
+    const GSIS = ["TCS", "Infosys", "Wipro", "HCLTech"];
+
+    const DOMAINS = [
+      { id: "appdev", label: "1) App Management & DevOps" },
+      { id: "ms", label: "2) Managed Services, ITSM, Observability" },
+      { id: "infra", label: "3) Infrastructure: Compute/Storage/CPUs/GPUs/Cloud" },
+      { id: "dcwan", label: "4) Data Centers, Global WAN, Ecosystem" }
+    ];
+
+    // Matrix: each row is one GSI × Domain triad
+    const MATRIX = [
+      // ---------- Application Mgmt & DevOps ----------
+      {
+        gsi: "TCS",
+        domain: "appdev",
+        capability: [
+          "Cognix™ and AI engineering accelerators for large-scale application modernization.",
+          "Strong experience in refactoring monoliths and legacy estates for BFSI and retail.",
+          "Global delivery model with follow-the-sun DevOps and agile pods."
+        ],
+        aiShift: [
+          "GenAI-assisted code, test, and documentation generation to compress release cycles.",
+          "AIOps for proactive incident prevention across complex enterprise landscapes.",
+          "Shift from body-shopping to outcome-based AI delivery (velocity, quality, risk)."
+        ],
+        equinix: [
+          "Equinix Fabric connects TCS DevOps pipelines to all major clouds and registries with private, low-latency links.",
+          "Metro-proximate colocation for build agents, artifact stores, and test environments near customer data.",
+          "Neutral interconnect platform to standardize multi-cloud DevSecOps blueprints TCS can reuse across clients."
+        ]
+      },
+      {
+        gsi: "Infosys",
+        domain: "appdev",
+        capability: [
+          "Infosys Topaz stack for AI-infused engineering and platform builds.",
+          "Strong product engineering and platform modernization capability across industries.",
+          "Mature agile/DevOps practice with domain-specific solution accelerators."
+        ],
+        aiShift: [
+          "Topaz AI assistants for developers, testers, and architects across CI/CD.",
+          "Automated risk scoring of releases using historical incident and defect data.",
+          "AI-led blueprint generation for domain platforms (e.g., core banking, telco)."
+        ],
+        equinix: [
+          "Run Topaz components in Equinix IBXs close to multi-cloud landing zones and data sources.",
+          "Use Equinix Fabric for dependable connectivity to customer core systems and SaaS ecosystems.",
+          "Enable hybrid blueprints where compute sits near the data while Infosys orchestrates AI-driven DevOps."
+        ]
+      },
+      {
+        gsi: "Wipro",
+        domain: "appdev",
+        capability: [
+          "Wipro ai360 integrated into engineering pipelines for code, tests, and review.",
+          "Deep legacy modernization projects across manufacturing, energy, and telecom.",
+          "Strong nearshore + offshore engineering mix with domain playbooks."
+        ],
+        aiShift: [
+          "GenAI copilots guiding architecture decisions, API design, and microservice decomposition.",
+          "AI-generated regression suites to safely accelerate modernization waves.",
+          "Continuous learning loops from production telemetry fed back into DevOps and SRE."
+        ],
+        equinix: [
+          "Equinix as the neutral hub where Wipro can stage modernization sandboxes next to customer estates.",
+          "Fast, private interconnect to multiple clouds for refactor–replatform–rehost scenarios.",
+          "Ability to demonstrate ai360 blueprints in Equinix-based demo/PoC environments in key metros."
+        ]
+      },
+      {
+        gsi: "HCLTech",
+        domain: "appdev",
+        capability: [
+          "HCLTech AI Force for microservice generation and cloud-native refactoring.",
+          "Strong focus on product engineering and ISV partnerships.",
+          "Deep DevOps and SRE practice for large-scale enterprise landscapes."
+        ],
+        aiShift: [
+          "AI-driven identification of refactor candidates in legacy portfolios.",
+          "LLM-based creation of SRE runbooks and incident response guides.",
+          "Model-based test data and test case synthesis for complex enterprise workflows."
+        ],
+        equinix: [
+          "Place HCLTech engineering and integration platforms directly adjacent to client data centers and clouds.",
+          "Use Equinix Network Edge to build standardized secure access patterns into DevOps tooling.",
+          "Offer global PoC hubs where clients can see AI Force + Equinix architectures for their domain."
+        ]
+      },
+
+      // ---------- Managed Services, ITSM, Observability ----------
+      {
+        gsi: "TCS",
+        domain: "ms",
+        capability: [
+          "Large-scale managed services and cognitive service desk practices.",
+          "Mature ITIL, SRE, and observability implementations across regulated industries.",
+          "Global operations centers handling high ticket volumes."
+        ],
+        aiShift: [
+          "GenAI bots deflecting L1 tickets and summarizing incidents for L2/L3.",
+          "Multi-modal AIOps correlating logs, metrics, and traces to reduce MTTR.",
+          "Predictive SLA management using anomaly detection and traffic forecasting."
+        ],
+        equinix: [
+          "Deploy observability collectors in Equinix metros close to customer workloads for low-latency ingestion.",
+          "Use Equinix Fabric to build private data paths from customer environments into TCS AIOps platforms.",
+          "Standardize global managed-services connectivity patterns across clouds and regions."
+        ]
+      },
+      {
+        gsi: "Infosys",
+        domain: "ms",
+        capability: [
+          "Infosys Topaz + ITSM offerings for enterprise support operations.",
+          "Strong managed services footprint in BFSI, retail, and manufacturing.",
+          "Experience in observability platform rollouts at global scale."
+        ],
+        aiShift: [
+          "AI-driven triage and knowledge retrieval integrated into Topaz service desks.",
+          "End-to-end incident story-building using LLMs over observability data.",
+          "Self-healing automation informed by AI-simulated failure scenarios."
+        ],
+        equinix: [
+          "Run Topaz AIOps nodes in Equinix IBXs near customer workloads for better fidelity.",
+          "Leverage partner observability ISVs inside Equinix ecosystems for joint solutions.",
+          "Use Network Edge to steer sensitive incident traffic over private links rather than public internet."
+        ]
+      },
+      {
+        gsi: "Wipro",
+        domain: "ms",
+        capability: [
+          "Wipro Holmes™ and ai360 for AIOps and ITSM automation.",
+          "Global delivery centers providing 24x7 managed services.",
+          "Strong vertical managed services for telecom and energy."
+        ],
+        aiShift: [
+          "Holmes™ bots executing runbook steps autonomously for L1/L2 issues.",
+          "GenAI-powered ChatOps consoles for SRE and operations teams.",
+          "AI-based user sentiment and experience scoring feeding into SLAs."
+        ],
+        equinix: [
+          "Colocate Wipro managed services platforms in Equinix adjacent to multi-cloud estates.",
+          "Use Equinix Fabric to unify signal ingestion from distributed customer regions into central AIOps cores.",
+          "Demonstrate Holmes/ai360 with Equinix connectivity patterns as reference architectures for clients."
+        ]
+      },
+      {
+        gsi: "HCLTech",
+        domain: "ms",
+        capability: [
+          "DRYiCE™ suite for AIOps and intelligent ITSM.",
+          "Deep managed services footprint across infrastructure and applications.",
+          "Strong experience in hybrid operations for regulated industries."
+        ],
+        aiShift: [
+          "Noise reduction and intelligent correlation of alerts across hybrid environments.",
+          "GenAI-enhanced runbooks, KB articles, and remediation flows.",
+          "Predictive capacity and incident modeling to avoid outages."
+        ],
+        equinix: [
+          "Deploy DRYiCE™ collectors and processors in Equinix metros close to core transaction systems.",
+          "Private interconnection routes for sensitive telemetry traffic to stay off the public internet.",
+          "Global platform to deliver consistent SRE and ITSM operations across continents."
+        ]
+      },
+
+      // ---------- Infrastructure: Compute/Storage/CPUs/GPUs/Cloud ----------
+      {
+        gsi: "TCS",
+        domain: "infra",
+        capability: [
+          "Hybrid and multi-cloud architecture services for large enterprises.",
+          "Deep infra services across compute, storage, and network layers.",
+          "Strong experience with large-scale data center migrations."
+        ],
+        aiShift: [
+          "GPU-aware placement strategies for AI training and inference workloads.",
+          "AI-based FinOps optimizing spend across heterogeneous GPU estates.",
+          "Model compression, distillation, and placement for efficient inference."
+        ],
+        equinix: [
+          "AI-ready colocation with high-density, liquid-cooled racks for GPU clusters.",
+          "Proximity to hyperscalers to minimize egress and latency for AI workloads.",
+          "Equinix Fabric to stitch together hybrid GPU farms across regions and clouds."
+        ]
+      },
+      {
+        gsi: "Infosys",
+        domain: "infra",
+        capability: [
+          "Infosys Topaz AI Cloud Navigator for infrastructure design and optimization.",
+          "Strong cloud migration and platform engineering practices.",
+          "Experience with multi-region, multi-cloud infra for global enterprises."
+        ],
+        aiShift: [
+          "AI-led workload placement across regions and cloud providers.",
+          "Automated storage tiering and caching for AI data pipelines.",
+          "GPU capacity planning using predictive demand models."
+        ],
+        equinix: [
+          "Place Topaz infra control planes in Equinix to see and manage cross-cloud connectivity.",
+          "Use Equinix Fabric for secure, deterministic connectivity between clouds and on-prem sites.",
+          "Deploy GPU-ready pods in Equinix IBXs as standardized AI infra blocks for clients."
+        ]
+      },
+      {
+        gsi: "Wipro",
+        domain: "infra",
+        capability: [
+          "ai360 for infrastructure orchestration across cloud and on-prem.",
+          "Strong infra transformation projects in telecom, energy, and manufacturing.",
+          "Experience with cloud-native networking and security."
+        ],
+        aiShift: [
+          "AI-driven infra blueprints that adapt to application and AI demands.",
+          "Dynamic scaling of GPU and CPU clusters based on real-time demand.",
+          "Automated configuration, patching, and compliance checks using AI."
+        ],
+        equinix: [
+          "Equinix as the stable substrate for Wipro to land multi-cloud infra patterns.",
+          "Near-data colocation for infra management platforms and AI control planes.",
+          "Global reach to standardize ai360-based infra offerings across geographies."
+        ]
+      },
+      {
+        gsi: "HCLTech",
+        domain: "infra",
+        capability: [
+          "CloudSMART AI infra offerings focused on hybrid/cloud-native architectures.",
+          "Deep infra and hosting heritage with data center and cloud services.",
+          "Strong partnerships with hyperscalers and hardware vendors."
+        ],
+        aiShift: [
+          "GPU pod-based patterns for AI training and inference across industries.",
+          "AI-led compliance and configuration drift detection.",
+          "Synthetic data and pipeline optimization for training workloads."
+        ],
+        equinix: [
+          "Stage CloudSMART AI pods in Equinix facilities for repeatable client rollouts.",
+          "Leverage Equinix Network Edge for secure connectivity between GPU pods and client environments.",
+          "Use Equinix ecosystems (hyperscalers, ISVs, silicon vendors) to pre-integrate infra stacks."
+        ]
+      },
+
+      // ---------- Data Centers, Global WAN, Ecosystem ----------
+      {
+        gsi: "TCS",
+        domain: "dcwan",
+        capability: [
+          "Design and run global WAN and edge architectures for large enterprises.",
+          "Strong in data center strategy and campus designs.",
+          "Experience building industry-specific edge solutions (retail, manufacturing)."
+        ],
+        aiShift: [
+          "AI-driven WAN optimization and route selection based on application-level SLOs.",
+          "Distributed training hubs combined with edge inference for real-time use cases.",
+          "Data residency-aware placement of AI models and data flows."
+        ],
+        equinix: [
+          "AI-ready IBXs in dense metros to host TCS regional GPU hubs.",
+          "Equinix Fabric to link core training sites with edge inference nodes and cloud regions.",
+          "Neutral ecosystem to combine TCS solutions with hyperscalers, ISVs, and silicon providers."
+        ]
+      },
+      {
+        gsi: "Infosys",
+        domain: "dcwan",
+        capability: [
+          "Global network and edge architectures for BFSI, retail, and manufacturing.",
+          "Experience in regulated data center and compliance-focused deployments.",
+          "Topaz-based AI platform components deployable at edge and core."
+        ],
+        aiShift: [
+          "Edge inference for fraud detection, personalization, and IoT analytics.",
+          "Continuous AI lifecycle support across regions with automated evals and rollouts.",
+          "Federated learning where data stays in-region but models improve globally."
+        ],
+        equinix: [
+          "Co-locate Infosys edge and Topaz nodes in Equinix metros close to clients' data.",
+          "Use Equinix Fabric to connect regulated data estates to regional AI hubs.",
+          "Leverage Equinix’s compliance-ready footprint to satisfy residency and sectoral regulations."
+        ]
+      },
+      {
+        gsi: "Wipro",
+        domain: "dcwan",
+        capability: [
+          "Design of WAN and edge architecture for energy, telecom, and manufacturing.",
+          "Experience running global data center footprints for clients.",
+          "Strong ecosystem engagement with telecom and network vendors."
+        ],
+        aiShift: [
+          "Real-time edge AI for telecom, energy grid optimization, and predictive maintenance.",
+          "AI-enhanced network management for traffic engineering and QoS.",
+          "Multi-region inference fabrics serving low-latency APIs to end users."
+        ],
+        equinix: [
+          "Use Equinix as the physical nexus where Wipro edge nodes and core training hubs meet.",
+          "Leverage Network Edge for programmable routing between telco networks and cloud regions.",
+          "Provide Wipro with a consistent global platform to productize WAN+AI offerings."
+        ]
+      },
+      {
+        gsi: "HCLTech",
+        domain: "dcwan",
+        capability: [
+          "Design and operation of global data center and WAN environments.",
+          "Hybrid networking and SD-WAN integrations for large enterprises.",
+          "Deep experience with hosting and co-location advisory."
+        ],
+        aiShift: [
+          "AI-driven SD-WAN to dynamically steer traffic around congestion and failures.",
+          "Regional AI compute pods near regulated data stores (healthcare, BFSI).",
+          "Graph-based orchestration of multi-vendor AI ecosystems (cloud, silicon, ISV)."
+        ],
+        equinix: [
+          "Equinix as the interconnection core connecting HCLTech pods to client WANs and clouds.",
+          "Place regional AI compute pods in Equinix metros aligned to data residency rules.",
+          "Use Equinix ecosystems to pre-integrate partners into HCLTech solution blueprints."
+        ]
+      }
+    ];
+
+    let state = {
+      gsi: "all",
+      domain: "all",
+      search: ""
+    };
+
+    function initTabs() {
+      const frag = document.createDocumentFragment();
+
+      const allTab = document.createElement("button");
+      allTab.className = "tab active";
+      allTab.dataset.gsi = "all";
+      allTab.textContent = "All GSIs";
+      frag.appendChild(allTab);
+
+      GSIS.forEach((name) => {
+        const btn = document.createElement("button");
+        btn.className = "tab";
+        btn.dataset.gsi = name;
+        btn.innerHTML = `<span>${name}</span>`;
+        frag.appendChild(btn);
+      });
+
+      DOM.gsiTabs.appendChild(frag);
+
+      DOM.gsiTabs.addEventListener("click", (e) => {
+        const btn = e.target.closest(".tab");
+        if (!btn) return;
+        DOM.gsiTabs.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        state.gsi = btn.dataset.gsi;
+        renderCards();
+      });
+    }
+
+    function initDomainChips() {
+      const frag = document.createDocumentFragment();
+
+      const allChip = document.createElement("button");
+      allChip.className = "chip active";
+      allChip.dataset.domain = "all";
+      allChip.textContent = "All Domains";
+      frag.appendChild(allChip);
+
+      DOMAINS.forEach((d) => {
+        const btn = document.createElement("button");
+        btn.className = "chip";
+        btn.dataset.domain = d.id;
+        btn.textContent = d.label;
+        frag.appendChild(btn);
+      });
+
+      DOM.domainChips.appendChild(frag);
+
+      DOM.domainChips.addEventListener("click", (e) => {
+        const btn = e.target.closest(".chip");
+        if (!btn) return;
+        DOM.domainChips.querySelectorAll(".chip").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        state.domain = btn.dataset.domain;
+        renderCards();
+      });
+    }
+
+    function renderCards() {
+      DOM.cards.innerHTML = "";
+
+      const q = state.search.trim().toLowerCase();
+      let rows = MATRIX.slice();
+
+      if (state.gsi !== "all") {
+        rows = rows.filter((r) => r.gsi === state.gsi);
+      }
+
+      if (state.domain !== "all") {
+        rows = rows.filter((r) => r.domain === state.domain);
+      }
+
+      if (q) {
+        rows = rows.filter((r) => {
+          const haystack = [
+            r.gsi,
+            r.domain,
+            ...r.capability,
+            ...r.aiShift,
+            ...r.equinix
+          ]
+            .join(" ")
+            .toLowerCase();
+          return haystack.includes(q);
+        });
+      }
+
+      if (DOM.sort.value === "gsi") {
+        rows.sort((a, b) => {
+          if (a.gsi === b.gsi) {
+            return DOMAINS.findIndex((d) => d.id === a.domain) - DOMAINS.findIndex((d) => d.id === b.domain);
+          }
+          return a.gsi.localeCompare(b.gsi);
+        });
+      } else {
+        rows.sort((a, b) => {
+          const da = DOMAINS.findIndex((d) => d.id === a.domain);
+          const db = DOMAINS.findIndex((d) => d.id === b.domain);
+          if (da === db) return a.gsi.localeCompare(b.gsi);
+          return da - db;
+        });
+      }
+
+      if (!rows.length) {
+        const div = document.createElement("div");
+        div.className = "empty";
+        div.textContent = "No combinations match your filters. Try switching GSI, domain, or clearing search.";
+        DOM.cards.appendChild(div);
+        return;
+      }
+
+      rows.forEach((row) => {
+        const card = document.createElement("article");
+        card.className = "card";
+
+        const domLabel = DOMAINS.find((d) => d.id === row.domain)?.label || row.domain;
+
+        card.innerHTML = `
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">${row.gsi} × ${domLabel}</h2>
+              <div class="card-sub">
+                GSI Capability × AI Shift × <span style="color:${"#41d6b0"};">Equinix Advantage</span>
+              </div>
+            </div>
+            <div class="pill-mini">${row.gsi}</div>
+          </div>
+          <div class="card-body">
+            <div class="col">
+              <h3>GSI Capability</h3>
+              <ul>${row.capability.map((c) => `<li>${c}</li>`).join("")}</ul>
+            </div>
+            <div class="col">
+              <h3>AI Shift</h3>
+              <ul>${row.aiShift.map((c) => `<li>${c}</li>`).join("")}</ul>
+            </div>
+            <div class="col">
+              <h3>Equinix Advantage</h3>
+              <ul>${row.equinix.map((c) => `<li>${c}</li>`).join("")}</ul>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span>Use this triad as a slide: left = GSI, middle = AI, right = Equinix.</span>
+            <button type="button" data-copy="1">Copy triad</button>
+          </div>
+        `;
+
+        card.querySelector("button[data-copy]").addEventListener("click", () => {
+          const text = buildTriadMarkdown(row, domLabel);
+          navigator.clipboard.writeText(text).then(
+            () => {
+              alert("Copied value-prop triad for " + row.gsi + " × " + domLabel);
+            },
+            () => {
+              alert("Could not copy to clipboard in this environment.");
+            }
+          );
+        });
+
+        DOM.cards.appendChild(card);
+      });
+    }
+
+    function buildTriadMarkdown(row, domLabel) {
+      return [
+        `## ${row.gsi} × ${domLabel}`,
+        "",
+        "**GSI Capability**",
+        ...row.capability.map((c) => "- " + c),
+        "",
+        "**AI Shift**",
+        ...row.aiShift.map((c) => "- " + c),
+        "",
+        "**Equinix Advantage**",
+        ...row.equinix.map((c) => "- " + c),
+        ""
+      ].join("\n");
+    }
+
+    DOM.search.addEventListener("input", (e) => {
+      state.search = e.target.value;
+      renderCards();
+    });
+
+    DOM.sort.addEventListener("change", renderCards);
+
+    DOM.btnCopy.addEventListener("click", () => {
+      const q = state.search.trim().toLowerCase();
+      let rows = MATRIX.slice();
+
+      if (state.gsi !== "all") {
+        rows = rows.filter((r) => r.gsi === state.gsi);
+      }
+      if (state.domain !== "all") {
+        rows = rows.filter((r) => r.domain === state.domain);
+      }
+      if (q) {
+        rows = rows.filter((r) => {
+          const haystack = [
+            r.gsi,
+            r.domain,
+            ...r.capability,
+            ...r.aiShift,
+            ...r.equinix
+          ]
+            .join(" ")
+            .toLowerCase();
+          return haystack.includes(q);
+        });
+      }
+
+      if (!rows.length) {
+        alert("Nothing to copy for current filters.");
+        return;
+      }
+
+      const md = rows
+        .map((row) => {
+          const domLabel = DOMAINS.find((d) => d.id === row.domain)?.label || row.domain;
+          return buildTriadMarkdown(row, domLabel);
+        })
+        .join("\n");
+
+      navigator.clipboard.writeText(md).then(
+        () => alert("Copied visible value-prop matrix as Markdown."),
+        () => alert("Could not copy to clipboard in this environment.")
+      );
+    });
+
+    // init
+    initTabs();
+    initDomainChips();
+    renderCards();
+  </script>
+</body>
+</html>
