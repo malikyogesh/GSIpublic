@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Chip & Foundry Map — Edge, Datacenter, Non-TSMC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #050510;
+      color: #f3f3ff;
+    }
+    header {
+      padding: 24px 32px 18px;
+      background: #131326;
+      border-bottom: 1px solid #272747;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 26px;
+      letter-spacing: 0.02em;
+    }
+    .subtitle {
+      margin: 0;
+      max-width: 900px;
+      font-size: 14px;
+      color: #a0a0c5;
+      line-height: 1.6;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #0a0a18;
+      border: 1px solid #36365c;
+      font-size: 11px;
+      color: #b7b7e0;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      margin-bottom: 10px;
+    }
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #9f7bff, #5f3bff);
+      box-shadow: 0 0 8px rgba(159,123,255,0.9);
+    }
+
+    .container {
+      padding: 20px 32px 32px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .tab-btn {
+      padding: 8px 14px;
+      border-radius: 20px;
+      border: 1px solid #2b2b48;
+      background: #101020;
+      color: #c5c5e5;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #7c5cff, #2ac1ff);
+      color: #050510;
+      border-color: transparent;
+    }
+
+    .section-title {
+      margin: 10px 0 4px;
+      font-size: 18px;
+    }
+    .section-subtitle {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: #a0a0c8;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 10px 0 14px;
+      align-items: center;
+    }
+    .search-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #2c2c44;
+      background: #0c0c19;
+      color: #f3f3ff;
+      font-size: 13px;
+    }
+    .search-input::placeholder {
+      color: #70709c;
+    }
+    .export-btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid #7c5cff;
+      background: #7c5cff22;
+      color: #d9cfff;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .hint {
+      font-size: 11px;
+      color: #9999c7;
+      margin-bottom: 8px;
+    }
+
+    /* Table wrappers */
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid #23233b;
+      background: #070712;
+    }
+    table {
+      width: 2300px; /* wide layout */
+      min-width: 1600px;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    thead {
+      background: #181831;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    th {
+      padding: 9px 10px;
+      border-bottom: 1px solid #303058;
+      color: #a0a0c8;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.07em;
+      white-space: nowrap;
+    }
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #202038;
+      vertical-align: top;
+    }
+    tr:nth-child(even) td {
+      background: #0b0b18;
+    }
+
+    .section {
+      display: none;
+    }
+    .section.active {
+      display: block;
+    }
+
+    /* Patterns & Guidance */
+    #patterns {
+      margin-top: 28px;
+      padding-top: 18px;
+      border-top: 1px solid #2a2a46;
+    }
+    #patterns h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+    #patterns h3 {
+      margin: 14px 0 6px;
+      font-size: 15px;
+    }
+    #patterns p, #patterns li {
+      font-size: 13px;
+      color: #c0c0e0;
+      line-height: 1.6;
+    }
+    #patterns strong {
+      color: #f0e0ff;
+    }
+
+    footer {
+      padding: 14px 32px 22px;
+      border-top: 1px solid #262646;
+      font-size: 11px;
+      color: #9292c0;
+      background: #050510;
+    }
+
+    @media (max-width: 768px) {
+      .container, header {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="badge">
+    <div class="badge-dot"></div>
+    <span>AI Chip & Foundry Map · Edge · Datacenter · Non-TSMC</span>
+  </div>
+  <h1>Who Actually Fabs the Brains of AI?</h1>
+  <p class="subtitle">
+    Separate wide tables for: (1) Client / Edge AI SoCs (Apple, Google, Qualcomm),
+    (2) Future datacenter accelerators (Rubin, Trainium3, Tesla AI5/AI6),
+    and (3) Non-TSMC outliers (Samsung & Intel 18A). Filter, export CSV, and read the
+    strategic patterns at the bottom.
+  </p>
+</header>
+
+<div class="container">
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-target="client">1. Client / Edge SoCs</button>
+    <button class="tab-btn" data-target="future">2. Future Datacenter / Cloud</button>
+    <button class="tab-btn" data-target="non-tsmc">3. Non-TSMC Outliers</button>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <input id="searchInput" class="search-input" placeholder="Search chip, designer, foundry, node, sub-section, notes…" />
+    <button id="exportBtn" class="export-btn">Export Current Table as CSV</button>
+  </div>
+  <div class="hint">
+    Filter works on the currently visible category. For example: try “TSMC 3 nm”, “Samsung”, “Neural Engine”, “dual-foundry”, or “18A”.
+  </div>
+
+  <!-- 1. CLIENT / EDGE SOCs -->
+  <section id="section-client" class="section active">
+    <h2 class="section-title">1. Client / Edge AI SoCs (Apple, Google, Qualcomm)</h2>
+    <p class="section-subtitle">
+      1.1 Summary table – phones / tablets / laptops · Focus: on-die NPUs, TOPS, foundries, and nodes.
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Sub-Section</th>
+            <th>Chip / Family</th>
+            <th>Segment / Device Class</th>
+            <th>Designer</th>
+            <th>Foundry</th>
+            <th>Node</th>
+            <th>Wafer</th>
+            <th>NPU / AI Block</th>
+            <th>NPU Perf (approx)</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Apple -->
+          <tr>
+            <td>1.1 Phones / tablets / laptops</td>
+            <td>Apple A17 Pro</td>
+            <td>iPhone 15 Pro / Pro Max</td>
+            <td>Apple</td>
+            <td>TSMC</td>
+            <td>3 nm (N3B)</td>
+            <td>300 mm</td>
+            <td>Neural Engine (16-core)</td>
+            <td>~35 TOPS</td>
+            <td>First 3 nm Apple SoC; strong on-device vision and language tasks.</td>
+          </tr>
+          <tr>
+            <td>1.1 Phones / tablets / laptops</td>
+            <td>Apple A18 / A18 Pro</td>
+            <td>iPhone 16 family (flagships)</td>
+            <td>Apple</td>
+            <td>TSMC</td>
+            <td>3 nm (N3E)</td>
+            <td>300 mm</td>
+            <td>Neural Engine (16-core)</td>
+            <td>~35 TOPS (with higher bandwidth)</td>
+            <td>Refined 3 nm design; better sustained GenAI workloads vs A17 Pro.</td>
+          </tr>
+          <tr>
+            <td>1.1 Phones / tablets / laptops</td>
+            <td>Apple M4 / M4 Pro / Max</td>
+            <td>iPad Pro, Mac laptops / desktops</td>
+            <td>Apple</td>
+            <td>TSMC</td>
+            <td>3 nm (N3E)</td>
+            <td>300 mm</td>
+            <td>Neural Engine</td>
+            <td>~38 TOPS</td>
+            <td>Unified memory; designed for local LLMs and creative workloads in laptops.</td>
+          </tr>
+
+          <!-- Google Tensor -->
+          <tr>
+            <td>1.1 Phones / tablets / laptops</td>
+            <td>Google Tensor G3</td>
+            <td>Pixel 8 / 8 Pro</td>
+            <td>Google</td>
+            <td>Samsung</td>
+            <td>4 nm LPP</td>
+            <td>300 mm</td>
+            <td>TPU-style NPU + ML accelerators</td>
+            <td>(not formally disclosed)</td>
+            <td>Third-gen Tensor; strong on-device AI but thermally constrained in phones.</td>
+          </tr>
+          <tr>
+            <td>1.1 Phones / tablets / laptops</td>
+            <td>Google Tensor G4</td>
+            <td>Pixel 9 / 9 Pro</td>
+            <td>Google</td>
+            <td>Samsung</td>
+            <td>4 nm enhanced (LPP+)</td>
+            <td>300 mm</td>
+            <td>Updated TPU-style NPU</td>
+            <td>(incremental uplift vs G3)</td>
+            <td>Last Samsung-fabbed Tensor before migration to TSMC for G5.</td>
+          </tr>
+          <tr>
+            <td>1.1 Phones / tablets / laptops</td>
+            <td>Google Tensor G5</td>
+            <td>Pixel 10 family (expected)</td>
+            <td>Google</td>
+            <td>TSMC</td>
+            <td>3 nm (N3 class) with InFO-POP</td>
+            <td>300 mm</td>
+            <td>New-gen Tensor NPU</td>
+            <td>(major uplift expected)</td>
+            <td>First Tensor on TSMC; big perf-per-watt improvement and more aggressive AI positioning.</td>
+          </tr>
+
+          <!-- Qualcomm phones -->
+          <tr>
+            <td>1.1 Phones / tablets / laptops</td>
+            <td>Snapdragon 8 Gen 4</td>
+            <td>Android flagships</td>
+            <td>Qualcomm</td>
+            <td>TSMC</td>
+            <td>3 nm (N3E)</td>
+            <td>300 mm</td>
+            <td>Hexagon NPU</td>
+            <td>~30–40 TOPS (NPU), higher “total AI TOPS” marketed</td>
+            <td>Enabled for on-device LLMs up to multi-billion parameters; focus on GenAI camera and assistants.</td>
+          </tr>
+          <tr>
+            <td>1.1 Phones / tablets / laptops</td>
+            <td>Snapdragon 8s Gen 4 / 8 Gen 5 family</td>
+            <td>Upper-mid to high-end Android</td>
+            <td>Qualcomm</td>
+            <td>TSMC</td>
+            <td>4 nm → 3 nm (depending on SKU)</td>
+            <td>300 mm</td>
+            <td>Hexagon NPU</td>
+            <td>High-20s to 30+ TOPS class</td>
+            <td>Cheaper bins of the flagship architecture; spreads GenAI capability into mid-range devices.</td>
+          </tr>
+
+          <!-- Qualcomm PCs -->
+          <tr>
+            <td>1.1 Phones / tablets / laptops</td>
+            <td>Snapdragon X Elite (X1E)</td>
+            <td>Windows “AI PCs”</td>
+            <td>Qualcomm</td>
+            <td>TSMC</td>
+            <td>4 nm (N4)</td>
+            <td>300 mm</td>
+            <td>Hexagon NPU + micro-NPU</td>
+            <td>~45 TOPS (NPU), ~75 TOPS total AI</td>
+            <td>Anchor SoC for Copilot+ PCs; designed for local assistants and multimodal workloads.</td>
+          </tr>
+          <tr>
+            <td>1.1 Phones / tablets / laptops</td>
+            <td>Snapdragon X2 “Elite Extreme” (announced)</td>
+            <td>Next-gen AI PCs</td>
+            <td>Qualcomm</td>
+            <td>TSMC (expected)</td>
+            <td>Advanced 4 nm / 3 nm</td>
+            <td>300 mm</td>
+            <td>Next-gen Hexagon NPU</td>
+            <td>~80 TOPS (NPU)</td>
+            <td>Pushes NPU performance toward datacenter-grade efficiency in a laptop form factor.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 2. FUTURE DATACENTER / CLOUD -->
+  <section id="section-future" class="section">
+    <h2 class="section-title">2. Future Announced Parts: Rubin, Trainium3, Tesla AI5/AI6</h2>
+    <p class="section-subtitle">
+      2.1 Data center / cloud AI roadmap · 2.2 Tesla AI5 / AI6 dual-foundry strategy.
+      These are the chips that will soak 3 nm wafers over the next cycle.
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Sub-Section</th>
+            <th>Chip / Platform</th>
+            <th>Segment / Role</th>
+            <th>Designer</th>
+            <th>Foundry</th>
+            <th>Node</th>
+            <th>Wafer</th>
+            <th>HBM Gen</th>
+            <th>Perf / Target</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 2.1 Data center / cloud AI roadmap -->
+          <tr>
+            <td>2.1 DC / cloud roadmap</td>
+            <td>NVIDIA Rubin</td>
+            <td>Datacenter GPU (post-Blackwell)</td>
+            <td>NVIDIA</td>
+            <td>TSMC</td>
+            <td>3 nm (HPC-class)</td>
+            <td>300 mm</td>
+            <td>HBM4</td>
+            <td>~50 PFLOPS FP4 per accelerator</td>
+            <td>Core building block of next-wave “AI factories”; inherits NVLink / NVSwitch ecosystem.</td>
+          </tr>
+          <tr>
+            <td>2.1 DC / cloud roadmap</td>
+            <td>NVIDIA Rubin Ultra</td>
+            <td>Extreme datacenter GPU</td>
+            <td>NVIDIA</td>
+            <td>TSMC</td>
+            <td>3 nm</td>
+            <td>300 mm</td>
+            <td>HBM4</td>
+            <td>~100 PFLOPS FP4</td>
+            <td>Dual-Rubin concept; megawatt-class racks (e.g., NVL576-type configurations).</td>
+          </tr>
+          <tr>
+            <td>2.1 DC / cloud roadmap</td>
+            <td>AWS Trainium3 (Trn3)</td>
+            <td>Cloud training & inference ASIC</td>
+            <td>AWS (Annapurna Labs)</td>
+            <td>TSMC</td>
+            <td>3 nm (N3P / HPC)</td>
+            <td>300 mm</td>
+            <td>HBM3e</td>
+            <td>2–4× Trainium2; multi-PFLOPS FP8 per chip</td>
+            <td>First AWS 3 nm chip; shares 3 nm capacity with Rubin and Google TPUs.</td>
+          </tr>
+          <tr>
+            <td>2.1 DC / cloud roadmap</td>
+            <td>Google TPU v7p</td>
+            <td>Cloud TPU accelerator</td>
+            <td>Google</td>
+            <td>TSMC (expected)</td>
+            <td>3 nm (HPC)</td>
+            <td>300 mm</td>
+            <td>HBM4</td>
+            <td>(not fully public; next-gen scale)</td>
+            <td>TrendForce flags v7p as another large 3 nm consumer alongside Rubin and Trainium3.</td>
+          </tr>
+
+          <!-- 2.2 Tesla AI5 / AI6 dual-foundry strategy -->
+          <tr>
+            <td>2.2 Tesla AI5/AI6 dual-foundry</td>
+            <td>Tesla AI5</td>
+            <td>Datacenter training for FSD & robots</td>
+            <td>Tesla</td>
+            <td>Samsung + TSMC (dual-foundry)</td>
+            <td>Advanced 3–4 nm era</td>
+            <td>300 mm</td>
+            <td>HBM3e / early HBM4</td>
+            <td>~40× performance vs Tesla AI4</td>
+            <td>Tesla’s first explicit dual-foundry strategy to hedge capacity and geopolitical risk.</td>
+          </tr>
+          <tr>
+            <td>2.2 Tesla AI5/AI6 dual-foundry</td>
+            <td>Tesla AI6</td>
+            <td>Next-next-gen Tesla training</td>
+            <td>Tesla</td>
+            <td>Samsung + TSMC (dual-foundry)</td>
+            <td>More aggressive 3 nm generation</td>
+            <td>300 mm</td>
+            <td>HBM4+ (expected)</td>
+            <td>Target >2× AI5 performance</td>
+            <td>Extends the dual-foundry playbook; aiming at long-term autonomy + humanoid robot training capacity.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 3. NON-TSMC OUTLIERS -->
+  <section id="section-non-tsmc" class="section">
+    <h2 class="section-title">3. Non-TSMC Outliers</h2>
+    <p class="section-subtitle">
+      3.1 Samsung-fabbed AI silicon (Tesla + mobile) · 3.2 Intel’s 18A-era tiles. These are the realistic
+      alternatives when TSMC is full or politically constrained.
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Sub-Section</th>
+            <th>Chip / Process</th>
+            <th>Segment</th>
+            <th>Designer</th>
+            <th>Foundry</th>
+            <th>Node</th>
+            <th>Wafer</th>
+            <th>AI Block</th>
+            <th>Perf / Role</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 3.1 Samsung-fabbed AI silicon -->
+          <tr>
+            <td>3.1 Samsung-fabbed AI</td>
+            <td>Tesla HW3 “FSD Chip”</td>
+            <td>In-car autonomy (older gen)</td>
+            <td>Tesla</td>
+            <td>Samsung</td>
+            <td>14 nm</td>
+            <td>300 mm</td>
+            <td>Custom neural accelerators (systolic arrays)</td>
+            <td>First Tesla custom FSD SoC</td>
+            <td>Proof that Samsung could deliver automotive-grade AI silicon at scale for Tesla.</td>
+          </tr>
+          <tr>
+            <td>3.1 Samsung-fabbed AI</td>
+            <td>Tesla HW4 “FSD Computer 2”</td>
+            <td>In-car autonomy (current)</td>
+            <td>Tesla</td>
+            <td>Samsung (Hwasung)</td>
+            <td>7 nm</td>
+            <td>300 mm</td>
+            <td>Upgraded neural accelerators</td>
+            <td>~3× HW3 compute</td>
+            <td>Higher network capacity, more cameras, and better headroom for future FSD models.</td>
+          </tr>
+          <tr>
+            <td>3.1 Samsung-fabbed AI</td>
+            <td>Tesla HW5</td>
+            <td>Next-gen in-car autonomy</td>
+            <td>Tesla</td>
+            <td>Samsung</td>
+            <td>4 nm</td>
+            <td>300 mm</td>
+            <td>Next-gen neural accelerator</td>
+            <td>(pre-AI5 vehicle silicon)</td>
+            <td>Bridges the gap between legacy FSD SoCs and Tesla’s future AI5 training ecosystem.</td>
+          </tr>
+          <tr>
+            <td>3.1 Samsung-fabbed AI</td>
+            <td>Google Tensor G1</td>
+            <td>Pixel 6 phones</td>
+            <td>Google</td>
+            <td>Samsung</td>
+            <td>5 nm</td>
+            <td>300 mm</td>
+            <td>TPU-style NPU</td>
+            <td>First-gen in-house AI SoC</td>
+            <td>Shifted Google away from pure Qualcomm; emphasised on-device AI camera and speech.</td>
+          </tr>
+          <tr>
+            <td>3.1 Samsung-fabbed AI</td>
+            <td>Google Tensor G2</td>
+            <td>Pixel 7 family</td>
+            <td>Google</td>
+            <td>Samsung</td>
+            <td>5 nm class (refined)</td>
+            <td>300 mm</td>
+            <td>Improved NPU / TPU blocks</td>
+            <td>Incremental uplift vs G1</td>
+            <td>More efficient in always-on ML and camera pipelines.</td>
+          </tr>
+          <tr>
+            <td>3.1 Samsung-fabbed AI</td>
+            <td>Google Tensor G3</td>
+            <td>Pixel 8 family</td>
+            <td>Google</td>
+            <td>Samsung</td>
+            <td>4 nm LPP</td>
+            <td>300 mm</td>
+            <td>Third-gen TPU-style NPU</td>
+            <td>Better GenAI integration</td>
+            <td>Still limited by Samsung’s 4 nm thermals vs TSMC peers.</td>
+          </tr>
+          <tr>
+            <td>3.1 Samsung-fabbed AI</td>
+            <td>Google Tensor G4</td>
+            <td>Pixel 9 family</td>
+            <td>Google</td>
+            <td>Samsung</td>
+            <td>4 nm enhanced</td>
+            <td>300 mm</td>
+            <td>Updated NPU</td>
+            <td>Last Samsung Tensor</td>
+            <td>Marks end of Samsung era; G5 pivot moves Google onto TSMC 3 nm.</td>
+          </tr>
+          <tr>
+            <td>3.1 Samsung-fabbed AI</td>
+            <td>Samsung Exynos 2400</td>
+            <td>Samsung flagship phones</td>
+            <td>Samsung</td>
+            <td>Samsung</td>
+            <td>4 nm LPP+</td>
+            <td>300 mm</td>
+            <td>Samsung NPU / Xclipse</td>
+            <td>Competitive edge AI in mobile</td>
+            <td>Shows Samsung still builds non-TSMC NPUs with decent GenAI support for its own devices.</td>
+          </tr>
+
+          <!-- 3.2 Intel 18A-era AI tiles -->
+          <tr>
+            <td>3.2 Intel 18A-era tiles</td>
+            <td>Intel 18A process</td>
+            <td>Leading-edge logic node</td>
+            <td>Intel</td>
+            <td>Intel Foundry</td>
+            <td>“18A” (~1.8 nm marketing)</td>
+            <td>300 mm</td>
+            <td>Process enabler (RibbonFET + PowerVia)</td>
+            <td>Target node for AI & CPU tiles</td>
+            <td>Intel’s attempt to become a credible alternative to TSMC at the very edge of logic scaling.</td>
+          </tr>
+          <tr>
+            <td>3.2 Intel 18A-era tiles</td>
+            <td>Intel Xeon 6 “Clearwater Forest”</td>
+            <td>Datacenter E-core CPU</td>
+            <td>Intel</td>
+            <td>Intel Foundry</td>
+            <td>18A</td>
+            <td>300 mm</td>
+            <td>Matrix / AI accelerators in-package</td>
+            <td>Dense, power-efficient cores for cloud</td>
+            <td>First major volume product on 18A; a stepping stone to AI-specific tiles on same node.</td>
+          </tr>
+          <tr>
+            <td>3.2 Intel 18A-era tiles</td>
+            <td>Future Intel AI tiles / XPUs</td>
+            <td>Datacenter AI accelerators</td>
+            <td>Intel</td>
+            <td>Intel Foundry</td>
+            <td>18A variants</td>
+            <td>300 mm</td>
+            <td>GPU / XPU-style AI blocks</td>
+            <td>(roadmap, not yet commoditised)</td>
+            <td>Critical for Intel to prove it can host third-party AI designs and compete with TSMC/Samsung at scale.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- KEY PATTERNS & GUIDANCE -->
+  <section id="patterns">
+    <h2>Key Patterns & Strategic Guidance</h2>
+
+    <h3>1. Almost everything that matters still converges on TSMC 3 nm.</h3>
+    <p>
+      Client chips (A- / M-series, Snapdragon 8 / X, Tensor G5) and the heavy datacenter hitters
+      (Rubin, Rubin Ultra, Trainium3, TPU v7p) are all converging on <strong>TSMC 3 nm</strong>.  
+      If you care about long-term AI capacity, you’re really betting on:
+    </p>
+    <ul>
+      <li>Whether TSMC can keep yield, geopolitics, and energy stable at those nodes.</li>
+      <li>Which customers get <strong>priority allocation</strong> when wafer slots are oversubscribed.</li>
+      <li>How quickly those customers can turn wafer capacity into deployed AI services.</li>
+    </ul>
+
+    <h3>2. Hyperscalers are becoming chip designers, but not fabs.</h3>
+    <p>
+      Google, AWS, Tesla, Apple, and Qualcomm design their own silicon, but they all outsource the
+      physics to foundries. Control over <strong>RTL and software stack</strong> is shifting to hyperscalers,
+      while <strong>control over atoms</strong> stays with TSMC, Samsung, and (maybe) Intel 18A.
+    </p>
+    <ul>
+      <li>If you’re a vendor or partner, optimise for their <strong>software ecosystems</strong>, not just “GPU vs TPU”.</li>
+      <li>If you’re an investor or strategist, track <strong>who locks in long-term wafer contracts</strong>, not just who announces fancy chips.</li>
+    </ul>
+
+    <h3>3. Samsung is the only non-TSMC shop with real AI proof in the wild.</h3>
+    <p>
+      Tesla’s HW3 / HW4 / HW5, Google’s Tensor G1–G4, and Exynos 2400 show that Samsung can ship
+      meaningful AI silicon, especially in automotive and mobile. But:
+    </p>
+    <ul>
+      <li>Qualcomm and Apple still choose TSMC for their bleeding-edge parts.</li>
+      <li>Even Tesla’s AI5/AI6 training chips hedge with a <strong>dual-foundry strategy</strong> (Samsung + TSMC).</li>
+      <li>If TSMC becomes constrained, Samsung is the only realistic large-scale spillover destination today.</li>
+    </ul>
+
+    <h3>4. Intel 18A is the wild card — high upside, high execution risk.</h3>
+    <p>
+      Intel’s 18A node and Clearwater Forest are a serious attempt to claw back relevance.  
+      If 18A works at scale, Intel can:
+    </p>
+    <ul>
+      <li>Host its own AI tiles without depending on TSMC.</li>
+      <li>Offer an alternative foundry for other AI designers locked out of 3 nm capacity.</li>
+    </ul>
+    <p>
+      But until real AI GPUs and third-party designs ship at volume, treat 18A as an
+      <strong>option on the future</strong>, not a guaranteed escape route from TSMC concentration.
+    </p>
+
+    <h3>5. Practical guidance: how to use this map instead of just admiring it.</h3>
+    <ul>
+      <li>
+        <strong>If you’re planning infrastructure:</strong>  
+        Don’t just ask “GPU or TPU?” — ask which <strong>foundry + node</strong> your supplier is
+        tied to, and how exposed you are to <strong>single-point wafer risk</strong>.
+      </li>
+      <li>
+        <strong>If you’re building products:</strong>  
+        Design for <strong>multi-target</strong> execution (NVIDIA + at least one of TPU / Trainium / custom ASIC).
+        The more node-agnostic your software is, the less you suffer when a specific chip family is constrained.
+      </li>
+      <li>
+        <strong>If you’re thinking long-term power structures:</strong>  
+        Watch who secures multi-year 3 nm and 2 nm contracts, who can realistically switch to Samsung or Intel,
+        and who is locked into a single pipeline. Most “AI strategy” decks quietly ignore this, but this is where
+        sovereignty and dependency are actually decided.
+      </li>
+    </ul>
+
+    <p>
+      The uncomfortable reality: as AI eats more of the world, the world’s freedom to compute is bottlenecked by
+      a handful of fabs, a few nodes, and a finite number of wafers.  
+      The sooner you map your own work to those constraints, the less you’ll be surprised when the next shortage hits.
+    </p>
+  </section>
+</div>
+
+<footer>
+  Version 2 · Separate wide tables + CSV export. Update the rows as new silicon tapes out — the economics of wafers will not get kinder.
+</footer>
+
+<script>
+  // Tabs
+  const tabs = document.querySelectorAll(".tab-btn");
+  const sections = {
+    client: document.getElementById("section-client"),
+    future: document.getElementById("section-future"),
+    "non-tsmc": document.getElementById("section-non-tsmc"),
+  };
+
+  tabs.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabs.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      const target = btn.dataset.target;
+      Object.keys(sections).forEach(key => {
+        sections[key].classList.toggle("active", key === target);
+      });
+
+      // reset search when switching
+      document.getElementById("searchInput").value = "";
+      filterRows("");
+    });
+  });
+
+  // Helper: active table body
+  function currentTableBody() {
+    const activeSection = document.querySelector(".section.active");
+    return activeSection.querySelector("tbody");
+  }
+
+  // Filter rows
+  function filterRows(query) {
+    const tbody = currentTableBody();
+    if (!tbody) return;
+    const q = query.toLowerCase();
+    tbody.querySelectorAll("tr").forEach(row => {
+      const text = row.innerText.toLowerCase();
+      row.style.display = !q || text.includes(q) ? "" : "none";
+    });
+  }
+
+  const searchInput = document.getElementById("searchInput");
+  searchInput.addEventListener("input", e => filterRows(e.target.value));
+
+  // Export CSV of visible rows in current table
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    const tbody = currentTableBody();
+    if (!tbody) return;
+
+    const table = tbody.parentElement;
+    const headers = [...table.querySelectorAll("thead th")].map(th =>
+      `"${th.innerText.replace(/"/g, '""')}"`
+    ).join(",");
+
+    const rows = [...tbody.querySelectorAll("tr")]
+      .filter(r => r.style.display !== "none")
+      .map(r =>
+        [...r.children]
+          .map(td => `"${td.innerText.replace(/"/g, '""')}"`)
+          .join(",")
+      )
+      .join("\n");
+
+    const csv = headers + "\n" + rows;
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "ai_chip_foundry_map.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+</script>
+
+</body>
+</html>
