@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Journal Pro</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --accent: #10b981;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 500px;
+        }
+        .timer-display {
+            text-align: center;
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin: 0.5rem 0;
+            color: var(--primary);
+            font-variant-numeric: tabular-nums;
+        }
+        .status-msg { font-size: 0.9rem; color: var(--accent); text-align: center; min-height: 1.5rem; font-weight: bold; margin-bottom: 10px;}
+        
+        .section {
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid #334155;
+        }
+        label { display: block; margin-bottom: 0.5rem; font-size: 0.85rem; opacity: 0.8; font-weight: 600; }
+        
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: white;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        .controls { display: flex; gap: 10px; margin-bottom: 1rem; }
+        button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn-start { background: var(--primary); color: white; }
+        .btn-stop { background: #ef4444; color: white; display: none; }
+        .btn-export { background: #475569; color: white; font-size: 0.8rem; margin-top: 10px; }
+        .btn-add { background: var(--accent); color: white; width: 100%; }
+        
+        #journal-log {
+            margin-top: 1.5rem;
+            border-top: 1px solid #334155;
+            padding-top: 1rem;
+        }
+        .log-entry {
+            background: rgba(255,255,255,0.05);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            border-left: 3px solid var(--primary);
+        }
+        .timestamp { color: #94a3b8; font-size: 0.7rem; margin-right: 8px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div style="text-align: center; margin-bottom: 1rem;">
+        <h2 style="margin:0">Voice Journal</h2>
+    </div>
+
+    <div class="timer-display" id="timer">00:00</div>
+    <div class="status-msg" id="status">Ready</div>
+
+    <div id="setupSection" class="section">
+        <label>1. Reminder Interval</label>
+        <select id="intervalSelect">
+            <option value="5">Every 5 Minutes</option>
+            <option value="10">Every 10 Minutes</option>
+            <option value="15" selected>Every 15 Minutes</option>
+            <option value="30">Every 30 Minutes</option>
+            <option value="60">Every 60 Minutes</option>
+        </select>
+
+        <label>2. Start Timing</label>
+        <select id="startType" onchange="toggleDelayedInput()">
+            <option value="now">Start Immediately</option>
+            <option value="delayed">Schedule Start Time</option>
+        </select>
+
+        <div id="delayedInput" class="hidden">
+            <label>Set Start Time</label>
+            <input type="time" id="scheduledTime">
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="startBtn" class="btn-start">Start Session</button>
+        <button id="stopBtn" class="btn-stop">End Session</button>
+    </div>
+
+    <div id="activeSection" class="hidden section">
+        <input type="text" id="textInput" placeholder="Type journal entry...">
+        <button id="addTextBtn" class="btn-add">Add Entry & Reset Timer</button>
+    </div>
+
+    <div id="journal-log">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label style="margin:0">Journal History</label>
+            <button id="exportBtn" class="btn-export" style="width: auto; padding: 5px 10px;">Export CSV</button>
+        </div>
+        <div id="entriesList" style="margin-top: 10px;"></div>
+    </div>
+</div>
+
+<script>
+    let timeLeft;
+    let timerId = null;
+    let scheduleId = null;
+    let isListening = false;
+    let journalData = [];
+
+    const timerDisplay = document.getElementById('timer');
+    const intervalSelect = document.getElementById('intervalSelect');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const statusMsg = document.getElementById('status');
+    const textInput = document.getElementById('textInput');
+    const addTextBtn = document.getElementById('addTextBtn');
+    const entriesList = document.getElementById('entriesList');
+    const activeSection = document.getElementById('activeSection');
+    const setupSection = document.getElementById('setupSection');
+    const scheduledTimeInput = document.getElementById('scheduledTime');
+
+    const synth = window.speechSynthesis;
+    const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+    const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+    function toggleDelayedInput() {
+        const isDelayed = document.getElementById('startType').value === 'delayed';
+        document.getElementById('delayedInput').classList.toggle('hidden', !isDelayed);
+    }
+
+    function startSession() {
+        const startType = document.getElementById('startType').value;
+        
+        if (startType === 'delayed') {
+            const targetTime = scheduledTimeInput.value;
+            if (!targetTime) return alert("Please set a start time.");
+            
+            statusMsg.textContent = `Waiting to start at ${targetTime}...`;
+            startBtn.disabled = true;
+            
+            scheduleId = setInterval(() => {
+                const now = new Date();
+                const currentTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+                if (currentTime === targetTime) {
+                    clearInterval(scheduleId);
+                    beginCountdown();
+                }
+            }, 1000);
+        } else {
+            beginCountdown();
+        }
+    }
+
+    function beginCountdown() {
+        startBtn.disabled = false;
+        startBtn.style.display = 'none';
+        stopBtn.style.display = 'block';
+        activeSection.classList.remove('hidden');
+        setupSection.classList.add('hidden');
+        resetTimer();
+        
+        timerId = setInterval(() => {
+            if (!isListening) {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    updateTimerDisplay();
+                } else {
+                    triggerReminder();
+                }
+            }
+        }, 1000);
+        statusMsg.textContent = "Focus Mode Active";
+    }
+
+    function triggerReminder() {
+        isListening = true; 
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        statusMsg.textContent = "📢 Announcing Time...";
+        
+        const utter = new SpeechSynthesisUtterance(`It is ${timeStr}. Would you like to update your journal?`);
+        utter.onend = () => {
+            if (recognition) {
+                statusMsg.textContent = "🎙️ Listening...";
+                recognition.start();
+            } else {
+                finishCycle();
+            }
+        };
+        synth.speak(utter);
+    }
+
+    if (recognition) {
+        recognition.onresult = (event) => {
+            saveEntry(event.results[0][0].transcript);
+            finishCycle("Voice entry saved.");
+        };
+        recognition.onerror = () => finishCycle("No speech detected.");
+        recognition.onend = () => { isListening = false; };
+    }
+
+    function saveEntry(text) {
+        if (!text.trim()) return;
+        const now = new Date();
+        const dateStr = now.toLocaleDateString();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        journalData.push({ date: dateStr, time: timeStr, text: text });
+        
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        div.innerHTML = `<span class="timestamp">${timeStr}</span> ${text}`;
+        entriesList.prepend(div);
+        
+        textInput.value = "";
+        resetTimer();
+    }
+
+    function finishCycle(msg) {
+        isListening = false;
+        statusMsg.textContent = msg || "Focus Mode Active";
+        resetTimer();
+    }
+
+    function resetTimer() {
+        timeLeft = parseInt(intervalSelect.value) * 60;
+        updateTimerDisplay();
+    }
+
+    function updateTimerDisplay() {
+        const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const s = (timeLeft % 60).toString().padStart(2, '0');
+        timerDisplay.textContent = `${m}:${s}`;
+    }
+
+    function stopSession() {
+        clearInterval(timerId);
+        clearInterval(scheduleId);
+        startBtn.style.display = 'block';
+        startBtn.disabled = false;
+        stopBtn.style.display = 'none';
+        activeSection.classList.add('hidden');
+        setupSection.classList.remove('hidden');
+        statusMsg.textContent = "Session Ended";
+        timerDisplay.textContent = "00:00";
+    }
+
+    function exportToCSV() {
+        if (journalData.length === 0) return alert("No entries to export.");
+        let csvContent = "data:text/csv;charset=utf-8,Date,Time,Entry\n";
+        journalData.forEach(row => {
+            csvContent += `"${row.date}","${row.time}","${row.text.replace(/"/g, '""')}"\n`;
+        });
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `journal_export_${new Date().toLocaleDateString()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+    }
+
+    startBtn.addEventListener('click', startSession);
+    stopBtn.addEventListener('click', stopSession);
+    addTextBtn.addEventListener('click', () => saveEntry(textInput.value));
+    document.getElementById('exportBtn').addEventListener('click', exportToCSV);
+</script>
+</body>
+</html>
