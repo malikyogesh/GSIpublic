@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Journal & Focus Timer</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --accent: #10b981;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 500px;
+        }
+        .timer-display {
+            text-align: center;
+            font-size: 3.5rem;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            margin: 1rem 0;
+            color: var(--primary);
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+        }
+        .focus-badge {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .input-group { margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; opacity: 0.8; }
+        select, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: white;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button {
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        button:active { transform: scale(0.98); }
+        .btn-start { background: var(--primary); color: white; }
+        .btn-stop { background: #ef4444; color: white; display: none; }
+        .btn-add { background: var(--accent); color: white; width: 100%; }
+        
+        #journal-log {
+            margin-top: 2rem;
+            border-top: 1px solid #334155;
+            padding-top: 1rem;
+        }
+        .log-entry {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            border-left: 3px solid var(--primary);
+        }
+        .timestamp { color: #94a3b8; font-size: 0.75rem; margin-right: 8px; }
+        .status-msg { font-size: 0.85rem; color: var(--accent); text-align: center; min-height: 1.2rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div style="text-align: center;">
+        <div id="focusBadge" class="focus-badge">FOCUS MODE ACTIVE</div>
+        <h2 style="margin:0">Journal Assistant</h2>
+    </div>
+
+    <div class="timer-display" id="timer">00:00</div>
+    <div class="status-msg" id="status">Ready</div>
+
+    <div class="input-group">
+        <label>Reminder Frequency</label>
+        <select id="intervalSelect">
+            <option value="5">5 Minutes</option>
+            <option value="10">10 Minutes</option>
+            <option value="15" selected>15 Minutes</option>
+            <option value="30">30 Minutes</option>
+            <option value="60">60 Minutes</option>
+        </select>
+    </div>
+
+    <div class="controls">
+        <button id="startBtn" class="btn-start">Start Session</button>
+        <button id="stopBtn" class="btn-stop">End Session</button>
+    </div>
+
+    <div id="activeSection" style="display: none; margin-top: 1.5rem;">
+        <label>Quick Entry (Type or Wait for Voice)</label>
+        <input type="text" id="textInput" placeholder="What are you working on?">
+        <button id="addTextBtn" class="btn-add">Add Entry</button>
+    </div>
+
+    <div id="journal-log">
+        <label>Last Entry:</label>
+        <div id="lastEntryPreview" style="font-style: italic; opacity: 0.7; font-size: 0.9rem; margin-bottom: 1rem;">No entries yet.</div>
+        <label>History:</label>
+        <div id="entriesList"></div>
+    </div>
+</div>
+
+<script>
+    let timeLeft; // Seconds
+    let timerId = null;
+    let isRunning = false;
+
+    const timerDisplay = document.getElementById('timer');
+    const intervalSelect = document.getElementById('intervalSelect');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const statusMsg = document.getElementById('status');
+    const textInput = document.getElementById('textInput');
+    const addTextBtn = document.getElementById('addTextBtn');
+    const entriesList = document.getElementById('entriesList');
+    const lastEntryPreview = document.getElementById('lastEntryPreview');
+    const focusBadge = document.getElementById('focusBadge');
+    const activeSection = document.getElementById('activeSection');
+
+    // Speech APIs
+    const synth = window.speechSynthesis;
+    const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+    const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+    function updateTimerDisplay() {
+        const mins = Math.floor(timeLeft / 60);
+        const secs = timeLeft % 60;
+        timerDisplay.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function resetTimer() {
+        timeLeft = parseInt(intervalSelect.value) * 60;
+        updateTimerDisplay();
+    }
+
+    function startSession() {
+        isRunning = true;
+        resetTimer();
+        startBtn.style.display = 'none';
+        stopBtn.style.display = 'block';
+        activeSection.style.display = 'block';
+        focusBadge.style.display = 'inline-block';
+        intervalSelect.disabled = true;
+        
+        timerId = setInterval(() => {
+            if (timeLeft > 0) {
+                timeLeft--;
+                updateTimerDisplay();
+            } else {
+                triggerReminder();
+            }
+        }, 1000);
+        statusMsg.textContent = "Focus Mode Active";
+    }
+
+    function stopSession() {
+        isRunning = false;
+        clearInterval(timerId);
+        startBtn.style.display = 'block';
+        stopBtn.style.display = 'none';
+        activeSection.style.display = 'none';
+        focusBadge.style.display = 'none';
+        intervalSelect.disabled = false;
+        statusMsg.textContent = "Session Ended";
+        timerDisplay.textContent = "00:00";
+    }
+
+    function triggerReminder() {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        statusMsg.textContent = "📢 Speaking...";
+        
+        const utter = new SpeechSynthesisUtterance(`The time is ${timeStr}. Would you like to add an entry to your journal?`);
+        utter.onend = () => {
+            if (recognition) {
+                statusMsg.textContent = "🎙️ Listening...";
+                recognition.start();
+            }
+        };
+        synth.speak(utter);
+
+        if (recognition) {
+            recognition.onresult = (event) => {
+                const text = event.results[0][0].transcript;
+                saveEntry(text);
+                statusMsg.textContent = "Entry saved via voice!";
+            };
+            recognition.onerror = () => {
+                statusMsg.textContent = "Mic timed out. Resetting timer.";
+                resetTimer();
+            };
+        }
+    }
+
+    function saveEntry(text) {
+        if (!text.trim()) return;
+        
+        const now = new Date();
+        const timeStamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        // Update UI
+        const entryDiv = document.createElement('div');
+        entryDiv.className = 'log-entry';
+        entryDiv.innerHTML = `<span class="timestamp">${timeStamp}</span> ${text}`;
+        entriesList.prepend(entryDiv);
+        
+        lastEntryPreview.textContent = `"${text}" at ${timeStamp}`;
+        textInput.value = "";
+        
+        // Reset Logic
+        resetTimer();
+        statusMsg.textContent = "Entry recorded.";
+    }
+
+    // Event Listeners
+    startBtn.addEventListener('click', startSession);
+    stopBtn.addEventListener('click', stopSession);
+    
+    addTextBtn.addEventListener('click', () => {
+        saveEntry(textInput.value);
+    });
+
+    textInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') saveEntry(textInput.value);
+    });
+
+</script>
+</body>
+</html>
